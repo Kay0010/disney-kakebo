@@ -86,6 +86,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .chip span{color:var(--gold)}
 .del-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,107,122,.35);font-size:14px;cursor:pointer}
 .del-btn:hover{color:var(--red)}
+.edit-btn{background:none;border:none;font-size:14px;cursor:pointer;padding:2px;opacity:.5}
+.edit-btn:hover{opacity:1}
 
 .empty{text-align:center;padding:50px 20px;color:var(--muted)}
 .empty-icon{font-size:44px;margin-bottom:12px}
@@ -380,17 +382,6 @@ function renderHome(){
     const amt=ct[c.id]||0;
     const pct=total>0?(amt/total*100).toFixed(0)+'%':'—';
     const bar=Math.round(amt/maxAmt*100);
-    const tips={
-      ticket:'夕方チケットへの切替で節約できる可能性があります',
-      food:'外食→インパで1回2,000〜3,000円削減できます',
-      goods:'欲しいものリストを事前に絞ると衝動買いが減ります',
-      clothes:'フリマ・古着でコーデコストを削減できます',
-      travel:'早割・EX予約で交通費を最大30〜50%削減できます',
-      hotel:'ミラコスタ以外も選択肢に入れると大幅節約になります',
-      collab:'「今月1点まで」などルールを決めると出費が安定します',
-      media:'年額プランへの切替で月割コストが下がります',
-    };
-    const tip=tips[c.id]?`<div class="catbar-tip">💡 ${tips[c.id]}</div>`:'';
     return `<div class="catbar">
       <div class="catbar-row">
         <span class="catbar-name">${c.icon} ${c.label}</span>
@@ -400,7 +391,6 @@ function renderHome(){
         </div>
       </div>
       <div class="track"><div class="fill" style="width:${bar}%;background:${c.color}"></div></div>
-      ${tip}
     </div>`;
   }).join('');
 }
@@ -436,7 +426,10 @@ function renderEntries(){
       return `<div class="chip">${c.icon} ${i.desc||c.label} <span>${fmt(i.amt)}</span></div>`;
     }).join('');
     return `<div class="entry">
-      <button class="del-btn" onclick="delEntry(${idx},event)">✕</button>
+      <div style="position:absolute;top:10px;right:10px;display:flex;gap:6px">
+        <button class="edit-btn" onclick="editEntry(${idx},event)">✏️</button>
+        <button class="del-btn" onclick="delEntry(${idx},event)">✕</button>
+      </div>
       <div class="entry-row1">
         <div>
           <div class="entry-scene">${e.scene||''}</div>
@@ -589,12 +582,32 @@ function clearData(){
 }
 
 // ── MODAL ──
+let editingIdx = null;
+
 function openModal(){
+  editingIdx = null;
+  document.querySelector('.modal-title').textContent = '支出を記録する';
+  document.querySelector('.btn-save').textContent = '記録する';
   document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('f-scene').value='TDL';
   document.getElementById('f-memo').value='';
   document.getElementById('erows').innerHTML='';
   addRow('ticket','',0);
+  updTotal();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function editEntry(idx, e){
+  e.stopPropagation();
+  editingIdx = idx;
+  const entry = S.entries[idx];
+  document.querySelector('.modal-title').textContent = '支出を編集する';
+  document.querySelector('.btn-save').textContent = '保存する';
+  document.getElementById('f-date').value = entry.date;
+  document.getElementById('f-scene').value = entry.scene||'TDL';
+  document.getElementById('f-memo').value = entry.memo||'';
+  document.getElementById('erows').innerHTML='';
+  (entry.items||[]).forEach(i => addRow(i.cat, i.desc, i.amt));
+  if(!(entry.items||[]).length) addRow('ticket','',0);
   updTotal();
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -626,7 +639,12 @@ function saveEntry(){
     const amt=Number(row.querySelectorAll('input')[1].value)||0;
     if(amt>0)items.push({cat,desc,amt});
   });
-  S.entries.push({date,scene:document.getElementById('f-scene').value,memo:document.getElementById('f-memo').value,items});
+  const entry={date,scene:document.getElementById('f-scene').value,memo:document.getElementById('f-memo').value,items};
+  if(editingIdx !== null){
+    S.entries[editingIdx] = entry;
+  } else {
+    S.entries.push(entry);
+  }
   saveS();closeModal();renderEntries();renderHome();
 }
 
