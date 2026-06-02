@@ -34,16 +34,47 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .page{display:none;padding:20px;position:relative;z-index:1}
 .page.active{display:block}
 
-/* CARDS */
-.card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:14px}
-.card-title{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes countUp{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+@keyframes barGlow{0%,100%{box-shadow:0 0 6px currentColor}50%{box-shadow:0 0 16px currentColor}}
+@keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
-/* HERO */
-.hero{background:linear-gradient(135deg,var(--s2),var(--s3));border:1px solid var(--bd2);border-radius:20px;padding:22px 20px;margin-bottom:14px;position:relative;overflow:hidden}
-.hero::after{content:'✦';position:absolute;right:-8px;top:-18px;font-size:110px;color:rgba(180,140,255,.04);pointer-events:none}
-.hero-label{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
-.hero-amount{font-family:'Playfair Display',serif;font-size:46px;color:var(--gold);line-height:1}
-.hero-sub{font-size:12px;color:var(--tx2);margin-top:8px;line-height:1.6}
+.page.active .hero{animation:fadeUp .4s cubic-bezier(.2,.8,.4,1) both}
+.page.active .catbar{animation:fadeUp .4s cubic-bezier(.2,.8,.4,1) both}
+.page.active .catbar:nth-child(1){animation-delay:.05s}
+.page.active .catbar:nth-child(2){animation-delay:.1s}
+.page.active .catbar:nth-child(3){animation-delay:.15s}
+.page.active .catbar:nth-child(4){animation-delay:.2s}
+.page.active .catbar:nth-child(5){animation-delay:.25s}
+.page.active .catbar:nth-child(6){animation-delay:.3s}
+.page.active .entry{animation:fadeUp .35s cubic-bezier(.2,.8,.4,1) both}
+.page.active .entry:nth-child(1){animation-delay:.04s}
+.page.active .entry:nth-child(2){animation-delay:.08s}
+.page.active .entry:nth-child(3){animation-delay:.12s}
+.page.active .entry:nth-child(4){animation-delay:.16s}
+.page.active .entry:nth-child(5){animation-delay:.2s}
+
+.hero-amount{font-family:'Playfair Display',serif;font-size:46px;color:var(--gold);line-height:1;animation:countUp .5s cubic-bezier(.2,.8,.4,1) both}
+
+.gauge-bar-inner{transition:width 1s cubic-bezier(.2,.8,.4,1)!important}
+.gauge-bar-glow{animation:barGlow 2s ease-in-out infinite}
+
+.bi{transition:color .2s,transform .1s}
+.bi:active{transform:scale(.88)}
+.mbtn{transition:background .15s,transform .1s}
+.mbtn:active{transform:scale(.85)}
+.btn-sm{transition:background .15s,transform .1s}
+.btn-sm:active{transform:scale(.93)}
+.entry-menu-btn{transition:opacity .15s,transform .1s}
+.entry-menu-btn:active{transform:scale(.85)}
+
+.modal{animation:up .32s cubic-bezier(.16,1,.3,1)!important}
+@keyframes up{from{transform:translateY(100%);opacity:.4}to{transform:translateY(0);opacity:1}}
+
+/* SHIMMER on hero amount when over budget */
+.hero-amount.over{background:linear-gradient(90deg,var(--red),#ffb3bb,var(--red));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 2s linear infinite}
 
 /* COPY BUTTON */
 .copy-btn{display:flex;align-items:center;gap:8px;background:rgba(240,192,96,.1);border:1px solid rgba(240,192,96,.3);border-radius:12px;padding:12px 16px;cursor:pointer;margin-top:14px;transition:background .15s;width:100%}
@@ -194,12 +225,34 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="hero-amount" id="hero-total">¥0</div>
     <div class="hero-sub" id="hero-sub">記録を追加してください</div>
 
-    <!-- COPY TO MAIN LEDGER -->
-    <button class="copy-btn" onclick="copyTotal()" id="copy-btn" style="display:none">
-      <span class="copy-btn-icon">📋</span>
-      <span class="copy-btn-label">メイン家計簿用にコピー<br><span style="font-size:10px;opacity:.7">「ディズニー代」カテゴリにそのまま使えます</span></span>
-      <span class="copy-btn-val" id="copy-val">¥0</span>
-    </button>
+    <div id="budget-gauge" style="display:none;margin-top:18px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <span style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">予算</span>
+        <span style="font-size:11px;color:var(--tx2)" id="gauge-label">—</span>
+      </div>
+      <!-- 手取りゲージ -->
+      <div id="income-gauge-wrap" style="display:none;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">
+          <span>手取り比率</span><span id="income-pct-label">0%</span>
+        </div>
+        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden">
+          <div id="income-bar" class="gauge-bar-inner" style="height:100%;width:0%;border-radius:4px"></div>
+        </div>
+      </div>
+      <!-- 予算ゲージ -->
+      <div id="budget-gauge-wrap" style="display:none">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px">
+          <span>予算消化</span><span id="budget-pct-label">0%</span>
+        </div>
+        <div style="height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
+          <div id="budget-bar" class="gauge-bar-inner" style="height:100%;width:0%;border-radius:5px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px">
+          <span style="color:var(--muted)">残り</span>
+          <span id="budget-remain" style="font-family:'Playfair Display',serif;font-size:16px"></span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- CATEGORY BREAKDOWN -->
@@ -460,29 +513,67 @@ function renderHome(){
   const ct=catTotals(entries);
   const total=grandTotal(ct);
   document.getElementById('hero-total').textContent=fmt(total);
-  document.getElementById('copy-val').textContent=fmt(total);
 
-  const copyBtn=document.getElementById('copy-btn');
-  copyBtn.style.display=total>0?'flex':'none';
-
-  // sub text
   const income=Number(S.income)||0;
   const budget=Number(S.budget)||0;
+
+  // sub text（手取り比率のみ簡潔に）
   let sub='';
   if(income>0){
     const pct=(total/income*100).toFixed(1);
-    sub+=`手取りの <b>${pct}%</b>`;
-    if(budget>0){
-      const rem=budget-total;
-      sub+= rem>=0 ? `　予算まで残り <b>${fmt(rem)}</b>` : `　<span style="color:var(--red)">予算を ${fmt(-rem)} オーバー ⚠️</span>`;
-    }
-  } else if(budget>0){
-    const rem=budget-total;
-    sub= rem>=0 ? `予算まで残り <b>${fmt(rem)}</b>` : `<span style="color:var(--red)">予算を ${fmt(-rem)} オーバー ⚠️</span>`;
+    sub=`手取りの <b>${pct}%</b>`;
   } else {
     sub=total>0 ? '設定から収入・予算を登録するとより詳しく表示されます' : '「記録」タブから支出を追加しましょう';
   }
   document.getElementById('hero-sub').innerHTML=sub;
+
+  // ゲージ表示
+  const gaugeWrap=document.getElementById('budget-gauge');
+  const hasGauge=income>0||budget>0;
+  gaugeWrap.style.display=hasGauge?'block':'none';
+
+  // 予算オーバーで金額シマー
+  const heroAmt=document.getElementById('hero-total');
+  heroAmt.className=budget>0&&total>budget?'hero-amount over':'hero-amount';
+
+  // 手取りゲージ
+  const incomeWrap=document.getElementById('income-gauge-wrap');
+  if(income>0){
+    incomeWrap.style.display='block';
+    const ipct=Math.min(total/income*100,100);
+    const ibar=document.getElementById('income-bar');
+    ibar.style.width=ipct+'%';
+    ibar.style.background=ipct<=20?'var(--grn)':ipct<=35?'var(--gold)':'var(--red)';
+    document.getElementById('income-pct-label').textContent=(total/income*100).toFixed(1)+'%';
+  } else {
+    incomeWrap.style.display='none';
+  }
+
+  // 予算ゲージ
+  const budgetWrap=document.getElementById('budget-gauge-wrap');
+  if(budget>0){
+    budgetWrap.style.display='block';
+    const bpct=Math.min(total/budget*100,100);
+    const rem=budget-total;
+    const barColor=bpct<70?'var(--grn)':bpct<100?'var(--gold)':'var(--red)';
+    const bbar=document.getElementById('budget-bar');
+    bbar.style.width=bpct+'%';
+    bbar.style.background=barColor;
+    bbar.className=bpct>=100?'gauge-bar-inner gauge-bar-glow':'gauge-bar-inner';
+    document.getElementById('budget-pct-label').textContent=bpct.toFixed(0)+'%';
+    const remainEl=document.getElementById('budget-remain');
+    if(rem>=0){
+      remainEl.textContent=fmt(rem);
+      remainEl.style.color='var(--grn)';
+    } else {
+      remainEl.textContent=`${fmt(-rem)} オーバー`;
+      remainEl.style.color='var(--red)';
+    }
+    document.getElementById('gauge-label').textContent=`${fmt(total)} / ${fmt(budget)}`;
+  } else {
+    budgetWrap.style.display='none';
+    document.getElementById('gauge-label').textContent='';
+  }
 
   // catbars
   const maxAmt=Math.max(...Object.values(ct),1);
@@ -650,23 +741,36 @@ function showCalDetail(date){
   const dateLabel=date.replace(/-/g,'/');
   let html=`<div class="cal-detail-card"><div class="cal-detail-title">${dateLabel}</div>`;
 
+  // イベントバッジ
   if(eventsOnDay.length){
+    html+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">`;
     html+=eventsOnDay.map(ev=>
-      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div style="width:10px;height:10px;border-radius:3px;background:${ev.color};flex-shrink:0"></div>
-        <span style="font-size:12px;color:var(--tx2)">${ev.name}</span>
+      `<div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:4px 10px">
+        <div style="width:8px;height:8px;border-radius:2px;background:${ev.color};flex-shrink:0"></div>
+        <span style="font-size:11px;color:var(--tx2)">${ev.name}</span>
       </div>`
     ).join('');
+    html+=`</div>`;
   }
 
+  // 記録ごとに内訳表示
   if(entries.length){
     entries.forEach(e=>{
       const total=(e.items||[]).reduce((s,i)=>s+(Number(i.amt)||0),0);
-      html+=`<div style="border-top:1px solid var(--bd);padding-top:10px;margin-top:6px">
-        <div style="display:flex;justify-content:space-between">
-          <span style="font-size:12px;color:var(--muted)">${e.scene||''} ${e.memo?'— '+e.memo:''}</span>
-          <span style="font-family:'Playfair Display',serif;font-size:16px;color:var(--gold)">${fmt(total)}</span>
+      const chips=(e.items||[]).filter(i=>Number(i.amt)>0).map(i=>{
+        const c=CATS.find(c=>c.id===i.cat)||{icon:'💫',label:i.cat};
+        return `<div class="chip">${c.icon} ${i.desc||c.label} <span>${fmt(i.amt)}</span></div>`;
+      }).join('');
+
+      html+=`<div style="border-top:1px solid var(--bd);padding-top:12px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+          <div>
+            <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted)">${e.scene||''}</div>
+            ${e.memo?`<div style="font-size:11px;color:var(--tx2);margin-top:2px">${e.memo}</div>`:''}
+          </div>
+          <span style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold)">${fmt(total)}</span>
         </div>
+        ${chips?`<div class="chips">${chips}</div>`:''}
       </div>`;
     });
   }
