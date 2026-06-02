@@ -282,6 +282,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <!-- SETTINGS -->
 <div class="page" id="page-settings">
   <div class="scard">
+    <div class="stitle">使い方</div>
+    <button class="wbtn" onclick="openHelp()" style="background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc)">📖 使い方を見る</button>
+  </div>
+  <div class="scard">
     <div class="stitle">収支情報（任意）</div>
     <div class="srow">
       <span class="srow-label">💴 月の手取り収入</span>
@@ -314,6 +318,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="stitle">イベント管理</div>
     <div id="event-list-settings"></div>
     <button class="wbtn" onclick="openEventModal()" style="background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc);margin-top:4px">＋ イベントを追加</button>
+  </div>
+  <div class="scard">
+    <div class="stitle">友達に共有する</div>
+    <div class="snote" style="margin-bottom:12px">Dオタの友達にもぜひ！リンクを送るだけでインストール不要で使えます。</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="if(typeof navigator.share==='function'){navigator.share({title:'Disney Kakebo',text:APP_TEXT,url:APP_URL})}else{copyAppUrl()}" class="wbtn" style="flex:1;margin-bottom:0;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff">📤 共有する</button>
+      <button onclick="copyAppUrl()" class="wbtn" style="flex:1;margin-bottom:0;background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc)">🔗 URLコピー</button>
+    </div>
   </div>
   <div class="scard">
     <div class="stitle">フィードバック</div>
@@ -423,6 +435,73 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEventModal()">キャンセル</button>
       <button class="btn-save" onclick="saveEvent()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="overlay" id="help-overlay" onclick="overlayClickHelp(event)">
+  <div class="modal" style="max-height:88vh">
+    <div class="modal-bar"></div>
+    <div class="modal-title">使い方</div>
+    <div style="font-size:13px;color:var(--tx2);line-height:1.9;overflow-y:auto">
+
+      <div style="background:linear-gradient(135deg,rgba(180,140,255,.1),rgba(180,140,255,.03));border:1px solid rgba(180,140,255,.2);border-radius:14px;padding:16px;margin-bottom:20px">
+        <div style="font-size:15px;color:var(--tx);font-weight:400;margin-bottom:8px;line-height:1.5">ディズニーにかける<br>お金を、もっと賢く。</div>
+        <p style="font-size:12px;line-height:1.8">アプリのインストール不要。リンクを開くだけで使えるディズニーオタク専用の家計簿です。パーク内の出費はもちろん、グッズ・コーデ・遠征費まで全部まとめて記録。「今月いくら使ったか」を正直に見える化して、推し活をもっと長く続けられる財布づくりをサポートします。</p>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">📝 基本の使い方</div>
+        <p><b style="color:var(--tx)">記録タブ</b>で支出を追加します。日付・場所・カテゴリ・金額を入力してください。1回のインパで複数の明細をまとめて登録できます。パーク内だけでなくディズニーストア・コラボグッズ・交通費なども全部記録できます。</p>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">🏰 ホームタブ</div>
+        <p>今月の総支出・手取り比率・予算の消化具合がひと目でわかります。カテゴリ別の内訳バーで何にいくら使ったか確認できます。</p>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">📅 カレンダータブ</div>
+        <p>日付をタップするとその日の支出内訳が表示されます。設定から登録したイベント期間はカラーバーで表示されます。</p>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">⚙️ 設定でやっておくこと</div>
+        <p>月の手取り収入・ディズニー予算を入力するとゲージが機能します。週の始まり・締め日を自分のクレカ締め日に合わせて設定できます。ハロウィンやクリスマスなどのイベント期間も登録しておくとカレンダーで確認できます。</p>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">💾 バックアップ・端末移行</div>
+        <p>設定の「バックアップデータをコピー」でJSONをコピーし、メモ帳やLINE自分宛てに貼って保存してください。新しい端末では「バックアップから復元」に貼り付けると引き継げます。</p>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">📋 メイン家計簿への連携</div>
+        <p>設定の「今月の集計をコピー（家計簿用）」を使うと「6月 ディズニー代: ¥71,000」の形式でコピーされます。そのままメイン家計簿に貼るだけです。</p>
+      </div>
+
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">📱 iPhoneでアプリ化する方法</div>
+        <p>Safariでこのページを開いて、共有ボタン →「ホーム画面に追加」でアプリとして使えます。データはブラウザに保存されます。</p>
+      </div>
+
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--acc);text-transform:uppercase;margin-bottom:10px">🔗 友達に共有する</div>
+        <p style="margin-bottom:12px">Dオタの友達にもぜひ！リンクを送るだけで使えます。</p>
+        <div style="display:flex;gap:10px">
+          <button onclick="if(typeof navigator.share==='function'){navigator.share({title:'Disney Kakebo',text:APP_TEXT,url:APP_URL})}else{copyAppUrl()}" style="flex:1;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff;border-radius:12px;padding:13px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;cursor:pointer">
+            📤 共有する
+          </button>
+          <button onclick="copyAppUrl()" style="flex:1;background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc);border-radius:12px;padding:13px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;cursor:pointer">
+            🔗 URLをコピー
+          </button>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn-save" onclick="closeHelp()">閉じる</button>
     </div>
   </div>
 </div>
@@ -930,6 +1009,33 @@ function restoreData(){
 function clearData(){
   if(confirm('全データを削除しますか？')){S.entries=[];saveS();alert('リセットしました。');}
 }
+
+const APP_URL='https://kay0010.github.io/disney-kakebo/disney-kakebo.html';
+const APP_TEXT='ディズニーオタク専用の家計簿アプリ。インストール不要・リンクを開くだけで使えます🏰';
+function shareApp(){
+  if(typeof navigator.share==='function'){
+    navigator.share({title:'Disney Kakebo',text:APP_TEXT,url:APP_URL});
+    return;
+  }
+  copyAppUrl();
+}
+function copyAppUrl(){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(APP_URL).then(()=>showToast('URLをコピーしました！'));
+  } else {
+    const ta=document.createElement('textarea');
+    ta.value=APP_URL;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('URLをコピーしました！');
+  }
+}
+
+function openHelp(){ document.getElementById('help-overlay').classList.add('open'); }
+function closeHelp(){ document.getElementById('help-overlay').classList.remove('open'); }
+function overlayClickHelp(e){ if(e.target===document.getElementById('help-overlay'))closeHelp(); }
 
 // ── MODAL ──
 let editingIdx = null;
