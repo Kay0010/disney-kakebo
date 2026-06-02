@@ -397,11 +397,17 @@ function saveS(){localStorage.setItem('dnkb3',JSON.stringify(S))}
 const fmt = n => '¥'+Math.round(n).toLocaleString();
 const monthEntries = () => {
   const [y,m] = S.currentMonth.split('-').map(Number);
-  const startDay = Number(S.monthStart)||1;
+  const startDay = Number(S.monthStart);
   if(startDay===1){
     return S.entries.filter(e=>e.date&&e.date.startsWith(S.currentMonth));
   }
-  // 締め日ベース: 前月startDay日 〜 当月(startDay-1)日
+  if(startDay===0){
+    // 月末締め：当月1日〜当月末日
+    const toStr = new Date(y,m,0).toISOString().slice(0,10);
+    const fromStr = `${S.currentMonth}-01`;
+    return S.entries.filter(e=>e.date&&e.date>=fromStr&&e.date<=toStr);
+  }
+  // 任意締め日：前月startDay日〜当月(startDay-1)日
   const from = new Date(y,m-2,startDay);
   const to   = new Date(y,m-1,startDay-1);
   const fromStr = from.toISOString().slice(0,10);
@@ -529,15 +535,15 @@ function renderEntries(){
         <button class="del-btn" onclick="delEntry(${idx},event)">✕</button>
       </div>
       <div class="entry-row1">
-        <div>
+        <div style="padding-right:60px">
           <div class="entry-scene">${e.scene||''}</div>
           <div class="entry-date">${(e.date||'').replace(/-/g,'/')}</div>
           ${e.memo?`<div class="entry-memo">${e.memo}</div>`:''}
         </div>
-        <div style="text-align:right">
-          <div style="font-size:10px;color:var(--muted)">合計</div>
-          <div class="entry-total">${fmt(total)}</div>
-        </div>
+      </div>
+      <div style="margin-top:6px">
+        <div style="font-size:10px;color:var(--muted)">合計</div>
+        <div class="entry-total">${fmt(total)}</div>
       </div>
       ${chips?`<div class="chips">${chips}</div>`:''}
     </div>`;
@@ -703,12 +709,11 @@ function saveEvent(){
   renderCal();
 }
 function deleteEvent(idx){
-  if(confirm('このイベントを削除しますか？')){
-    S.events.splice(idx,1);
-    saveS();
-    renderSettings();
-    renderCal();
-  }
+  S.events.splice(idx,1);
+  saveS();
+  renderSettings();
+  renderCal();
+  showToast('イベントを削除しました');
 }
 
 // ── SETTINGS ──
@@ -718,11 +723,14 @@ function renderSettings(){
   // 締め日のoption生成
   const ms = document.getElementById('set-month-start');
   if(ms.options.length===1){
-    for(let d=2;d<=28;d++){
+    for(let d=2;d<=31;d++){
       const o=document.createElement('option');
       o.value=d; o.textContent=`${d}日締め`;
       ms.appendChild(o);
     }
+    const oEnd=document.createElement('option');
+    oEnd.value=0; oEnd.textContent='月末締め';
+    ms.appendChild(oEnd);
   }
   document.getElementById('set-week-start').value=String(S.weekStart||0);
   document.getElementById('set-month-start').value=String(S.monthStart||1);
@@ -751,7 +759,7 @@ function saveSettings(){
   S.income=Number(document.getElementById('set-income').value)||0;
   S.budget=Number(document.getElementById('set-budget').value)||0;
   S.weekStart=Number(document.getElementById('set-week-start').value)||0;
-  S.monthStart=Number(document.getElementById('set-month-start').value)||1;
+  S.monthStart = document.getElementById('set-month-start').value === '0' ? 0 : (Number(document.getElementById('set-month-start').value)||1);
   saveS();
 }
 function exportData(){
