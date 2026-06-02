@@ -166,7 +166,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .overlay.open{display:flex}
 .modal{background:var(--s1);border:1px solid var(--bd2);border-radius:24px 24px 0 0;padding:20px 20px 44px;width:100%;max-height:92vh;overflow-y:auto;animation:up .28s cubic-bezier(.2,.8,.4,1)}
 @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal-bar{width:36px;height:4px;background:var(--muted);border-radius:2px;margin:0 auto 20px;opacity:.35}
+.modal-bar{width:36px;height:4px;background:var(--muted);border-radius:2px;margin:0 auto 20px;opacity:.35;cursor:grab;padding:10px 24px;box-sizing:content-box;background-clip:content-box}
 .modal-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--acc);margin-bottom:20px}
 .field{margin-bottom:14px}
 .field-label{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px}
@@ -1413,6 +1413,57 @@ function saveEntry(){
   }
   saveS();closeModal();renderEntries();renderHome();
 }
+
+// ── MODAL DRAG TO CLOSE ──
+(function(){
+  let startY=0, currentY=0, dragging=false;
+
+  function onStart(e){
+    // modal-bar か modal の上部タッチのみ受け付ける
+    const bar = e.target.closest('.modal-bar');
+    if(!bar) return;
+    dragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    currentY = 0;
+    const modal = bar.closest('.modal');
+    modal.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!dragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    currentY = Math.max(0, y - startY); // 上方向には動かさない
+    const modal = e.target.closest('.modal') || document.querySelector('.overlay.open .modal');
+    if(modal) modal.style.transform = `translateY(${currentY}px)`;
+  }
+  function onEnd(e){
+    if(!dragging) return;
+    dragging = false;
+    const modal = document.querySelector('.overlay.open .modal');
+    if(!modal) return;
+    if(currentY > 120){
+      // 閉じる：アニメーションしてからoverlay閉じ
+      modal.style.transition = 'transform .25s cubic-bezier(.4,0,1,1)';
+      modal.style.transform = 'translateY(100%)';
+      setTimeout(()=>{
+        document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+        modal.style.transform = '';
+        modal.style.transition = '';
+      }, 250);
+    } else {
+      // 戻す
+      modal.style.transition = 'transform .25s cubic-bezier(.2,.8,.4,1)';
+      modal.style.transform = 'translateY(0)';
+      setTimeout(()=>{ modal.style.transition=''; }, 250);
+    }
+  }
+
+  document.addEventListener('touchstart', onStart, {passive:true});
+  document.addEventListener('touchmove',  onMove,  {passive:true});
+  document.addEventListener('touchend',   onEnd);
+  document.addEventListener('mousedown',  onStart);
+  document.addEventListener('mousemove',  onMove);
+  document.addEventListener('mouseup',    onEnd);
+})();
 
 // ── INIT ──
 setMonthLabel();
