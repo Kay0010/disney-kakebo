@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Disney Kakebo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0b14; --s1:#17132a; --s2:#1e1835; --s3:#251f3e;
+  --bd:rgba(180,140,255,.12); --bd2:rgba(180,140,255,.22);
+  --acc:#b48cff; --acc2:#7c5cbf;
+  --gold:#f0c060; --gold2:#c8963c;
+  --red:#ff6b7a; --grn:#5cdba8; --muted:#6a6090;
+  --tx:#e8e0ff; --tx2:#a898d0;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:'Zen Kaku Gothic New',sans-serif;font-weight:300;min-height:100vh;padding-bottom:90px;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(100,60,180,.18) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 10% 80%,rgba(180,80,120,.12) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+.header{position:sticky;top:0;z-index:100;background:rgba(14,11,20,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between}
+.header-logo{font-family:'Playfair Display',serif;font-size:19px;color:var(--acc);letter-spacing:1px}
+.header-tag{font-size:9px;letter-spacing:2px;color:var(--muted);margin-top:2px;text-transform:uppercase}
+.mnav{display:flex;align-items:center;gap:10px}
+.mbtn{background:var(--s2);border:1px solid var(--bd);color:var(--acc);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mlabel{font-size:12px;color:var(--tx2);min-width:68px;text-align:center}
+
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(14,11,20,.96);backdrop-filter:blur(20px);border-top:1px solid var(--bd);display:flex}
+.bi{flex:1;padding:10px 4px 14px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .15s;font-size:10px;letter-spacing:.5px}
+.bi.active{color:var(--acc)}
+.bi-icon{font-size:20px}
+
+.page{display:none;padding:20px;position:relative;z-index:1}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:14px}
+.card-title{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--s2),var(--s3));border:1px solid var(--bd2);border-radius:20px;padding:22px 20px;margin-bottom:14px;position:relative;overflow:hidden}
+.hero::after{content:'✦';position:absolute;right:-8px;top:-18px;font-size:110px;color:rgba(180,140,255,.04);pointer-events:none}
+.hero-label{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.hero-amount{font-family:'Playfair Display',serif;font-size:46px;color:var(--gold);line-height:1}
+.hero-sub{font-size:12px;color:var(--tx2);margin-top:8px;line-height:1.6}
+
+/* COPY BUTTON */
+.copy-btn{display:flex;align-items:center;gap:8px;background:rgba(240,192,96,.1);border:1px solid rgba(240,192,96,.3);border-radius:12px;padding:12px 16px;cursor:pointer;margin-top:14px;transition:background .15s;width:100%}
+.copy-btn:hover{background:rgba(240,192,96,.18)}
+.copy-btn-label{font-size:12px;color:var(--gold);flex:1;text-align:left}
+.copy-btn-val{font-family:'Playfair Display',serif;font-size:18px;color:var(--gold)}
+.copy-btn-icon{font-size:16px}
+
+/* CATBAR */
+.catbar{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:13px 14px;margin-bottom:9px}
+.catbar-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.catbar-name{font-size:12px;color:var(--tx2)}
+.catbar-right{display:flex;align-items:baseline;gap:8px}
+.catbar-amount{font-family:'Playfair Display',serif;font-size:20px;color:var(--tx)}
+.catbar-pct{font-size:11px;color:var(--muted)}
+.track{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.fill{height:100%;border-radius:2px;transition:width .7s ease}
+.catbar-tip{margin-top:7px;font-size:11px;color:var(--muted);line-height:1.5}
+.catbar-tip b{color:var(--grn)}
+
+/* SIM CARD */
+.sim-card{background:linear-gradient(135deg,rgba(92,219,168,.06),rgba(92,219,168,.02));border:1px solid rgba(92,219,168,.2);border-radius:14px;padding:16px;margin-bottom:10px}
+.sim-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.sim-icon{font-size:20px;flex-shrink:0}
+.sim-title{font-size:13px;color:var(--grn);line-height:1.4}
+.sim-body{font-size:12px;color:var(--tx2);line-height:1.75}
+.sim-body b{color:var(--gold)}
+.sim-body .grn{color:var(--grn)}
+.sim-saving{display:inline-block;background:rgba(92,219,168,.12);border:1px solid rgba(92,219,168,.25);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--grn);margin-top:8px;font-family:'Playfair Display',serif}
+
+/* ENTRIES */
+.entry{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px;position:relative}
+.entry-row1{display:flex;justify-content:space-between;align-items:flex-start}
+.entry-scene{font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.entry-date{font-family:'Playfair Display',serif;font-size:19px;color:var(--tx);line-height:1.1}
+.entry-memo{font-size:11px;color:var(--muted);margin-top:2px}
+.entry-total{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.chip{background:rgba(180,140,255,.08);border:1px solid var(--bd);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--tx2)}
+.chip span{color:var(--gold)}
+.del-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(255,107,122,.35);font-size:14px;cursor:pointer}
+.del-btn:hover{color:var(--red)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty-text{font-size:13px;line-height:1.8}
+
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-label{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+.btn-sm{background:var(--acc2);border:none;color:#fff;border-radius:20px;padding:6px 16px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;cursor:pointer;transition:background .15s}
+.btn-sm:hover{background:var(--acc)}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);z-index:200;align-items:flex-end}
+.overlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bd2);border-radius:24px 24px 0 0;padding:20px 20px 44px;width:100%;max-height:92vh;overflow-y:auto;animation:up .28s cubic-bezier(.2,.8,.4,1)}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-bar{width:36px;height:4px;background:var(--muted);border-radius:2px;margin:0 auto 20px;opacity:.35}
+.modal-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--acc);margin-bottom:20px}
+.field{margin-bottom:14px}
+.field-label{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;color:var(--tx);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.field input:focus,.field select:focus{border-color:var(--acc)}
+.field select option{background:var(--s2)}
+.erow{display:grid;grid-template-columns:1fr 1fr 90px 32px;gap:6px;margin-bottom:6px;align-items:center}
+.erow input,.erow select{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:10px 8px;color:var(--tx);font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;outline:none;width:100%;-webkit-appearance:none}
+.erow input:focus,.erow select:focus{border-color:var(--acc)}
+.erow input[type=number]{text-align:right}
+.btn-del-row{background:none;border:1px solid rgba(255,107,122,.25);color:var(--red);border-radius:7px;width:32px;height:38px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.btn-add-row{width:100%;background:none;border:1px dashed var(--bd2);color:var(--muted);border-radius:8px;padding:10px;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;transition:border-color .15s,color .15s}
+.btn-add-row:hover{border-color:var(--acc);color:var(--acc)}
+.total-row{display:flex;justify-content:space-between;align-items:center;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-top:4px}
+.total-label{font-size:12px;color:var(--muted)}
+.total-val{font-family:'Playfair Display',serif;font-size:26px;color:var(--gold)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-cancel{flex:1;background:none;border:1px solid var(--bd);color:var(--muted);border-radius:12px;padding:14px;font-family:'Zen Kaku Gothic New',sans-serif;cursor:pointer;font-size:14px}
+.btn-save{flex:2;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff;border-radius:12px;padding:14px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:500;cursor:pointer;font-size:14px;letter-spacing:.5px}
+
+/* SETTINGS */
+.scard{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:14px}
+.stitle{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:16px}
+.srow{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.srow:last-child{margin-bottom:0}
+.srow-label{flex:1;font-size:13px;color:var(--tx2)}
+.sinput{width:130px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;color:var(--tx);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;outline:none;text-align:right}
+.sinput:focus{border-color:var(--acc)}
+.snote{font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px}
+.wbtn{width:100%;padding:13px;border-radius:12px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;cursor:pointer;margin-bottom:10px}
+
+/* TOAST */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--grn);color:#0e1a14;border-radius:12px;padding:12px 22px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">✦ Disney Kakebo</div>
+    <div class="header-tag">沼の深さを知る家計簿</div>
+  </div>
+  <div class="mnav">
+    <button class="mbtn" onclick="changeMonth(-1)">‹</button>
+    <div class="mlabel" id="mlabel">—</div>
+    <button class="mbtn" onclick="changeMonth(1)">›</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+
+  <div class="hero">
+    <div class="hero-label">今月のディズニー総支出</div>
+    <div class="hero-amount" id="hero-total">¥0</div>
+    <div class="hero-sub" id="hero-sub">記録を追加してください</div>
+
+    <!-- COPY TO MAIN LEDGER -->
+    <button class="copy-btn" onclick="copyTotal()" id="copy-btn" style="display:none">
+      <span class="copy-btn-icon">📋</span>
+      <span class="copy-btn-label">メイン家計簿用にコピー<br><span style="font-size:10px;opacity:.7">「ディズニー代」カテゴリにそのまま使えます</span></span>
+      <span class="copy-btn-val" id="copy-val">¥0</span>
+    </button>
+  </div>
+
+  <!-- CATEGORY BREAKDOWN -->
+  <div class="section-head">
+    <span class="section-label">カテゴリ別内訳</span>
+  </div>
+  <div id="catbar-list"></div>
+
+</div>
+
+<!-- ENTRIES -->
+<div class="page" id="page-entries">
+  <div class="section-head">
+    <span class="section-label">支出記録</span>
+    <button class="btn-sm" onclick="openModal()">＋ 追加</button>
+  </div>
+  <div id="entry-list"></div>
+</div>
+
+<!-- SIMULATION -->
+<div class="page" id="page-sim">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">節約シミュレーション</div>
+    <div style="font-size:12px;color:var(--tx2);line-height:1.7">今月の支出パターンをもとに、<b style="color:var(--tx)">具体的な代替案と削減額</b>を計算しています。</div>
+  </div>
+  <div id="sim-list"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="scard">
+    <div class="stitle">収支情報（任意）</div>
+    <div class="srow">
+      <span class="srow-label">💴 月の手取り収入</span>
+      <input type="number" class="sinput" id="set-income" placeholder="230000" oninput="saveSettings()">
+    </div>
+    <div class="srow">
+      <span class="srow-label">🏰 月間ディズニー予算</span>
+      <input type="number" class="sinput" id="set-budget" placeholder="50000" oninput="saveSettings()">
+    </div>
+    <div class="snote">入力すると手取り比率・予算進捗が表示されます。未入力でも使えます。</div>
+  </div>
+  <div class="scard">
+    <div class="stitle">データ管理</div>
+    <button class="wbtn" onclick="exportData()" style="background:var(--s2);border:1px solid var(--bd);color:var(--tx2)">📋 データをコピー（バックアップ）</button>
+    <button class="wbtn" onclick="clearData()" style="background:none;border:1px solid rgba(255,107,122,.3);color:var(--red)">🗑️ 全データをリセット</button>
+  </div>
+</div>
+
+<div class="bnav">
+  <div class="bi active" onclick="showPage('home',this)"><div class="bi-icon">🏰</div>今月</div>
+  <div class="bi" onclick="showPage('entries',this)"><div class="bi-icon">📝</div>記録</div>
+  <div class="bi" onclick="showPage('sim',this)"><div class="bi-icon">💡</div>節約案</div>
+  <div class="bi" onclick="showPage('settings',this)"><div class="bi-icon">⚙️</div>設定</div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal-overlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-bar"></div>
+    <div class="modal-title">支出を記録する</div>
+    <div class="field">
+      <label class="field-label">日付</label>
+      <input type="date" id="f-date">
+    </div>
+    <div class="field">
+      <label class="field-label">場所・シーン</label>
+      <select id="f-scene">
+        <optgroup label="パーク">
+          <option value="TDL">🏰 東京ディズニーランド</option>
+          <option value="TDS">⚓ 東京ディズニーシー</option>
+          <option value="両パーク">🎡 両パーク（はしご）</option>
+          <option value="海外パーク">✈️ 海外ディズニーパーク</option>
+        </optgroup>
+        <optgroup label="パーク外">
+          <option value="ディズニーストア">🛍️ ディズニーストア</option>
+          <option value="コラボカフェ">☕ コラボカフェ・レストラン</option>
+          <option value="コラボグッズ">✨ コラボ・ライセンスグッズ</option>
+          <option value="オンライン">💻 オンライン・フリマ</option>
+          <option value="映画・イベント">🎬 映画・イベント</option>
+          <option value="遠征費">🚄 交通・宿泊（遠征費）</option>
+          <option value="コーデ">👗 ディズニーコーデ・服</option>
+          <option value="サブスク">📱 Disney+ / サブスク</option>
+          <option value="その他">💫 その他ディズニー関連</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">メモ（任意）</label>
+      <input type="text" id="f-memo" placeholder="例：ハロウィン、限定グッズ購入 等">
+    </div>
+    <div class="field">
+      <label class="field-label">支出明細</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 90px 32px;gap:6px;margin-bottom:6px;padding:0 2px">
+        <span style="font-size:10px;color:var(--muted)">カテゴリ</span>
+        <span style="font-size:10px;color:var(--muted)">内容</span>
+        <span style="font-size:10px;color:var(--muted);text-align:right">金額(¥)</span>
+        <span></span>
+      </div>
+      <div id="erows"></div>
+      <button class="btn-add-row" onclick="addRow()">＋ 項目を追加</button>
+    </div>
+    <div class="total-row">
+      <span class="total-label">合計</span>
+      <span class="total-val" id="modal-total">¥0</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveEntry()">記録する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CATEGORIES ──
+const CATS = [
+  {id:'ticket', icon:'🎟️', label:'チケット・入場', color:'#5c9be0'},
+  {id:'food',   icon:'🍽️', label:'フード・ドリンク',color:'#e8a85c'},
+  {id:'goods',  icon:'🛍️', label:'グッズ・雑貨',   color:'#b48cff'},
+  {id:'clothes',icon:'👗', label:'コーデ・服代',    color:'#e05c8a'},
+  {id:'travel', icon:'🚄', label:'交通費',           color:'#5cdba8'},
+  {id:'hotel',  icon:'🏨', label:'宿泊費',           color:'#f0c060'},
+  {id:'collab', icon:'✨', label:'コラボ・ライセンス',color:'#c060e0'},
+  {id:'media',  icon:'🎬', label:'映画・サブスク',   color:'#60c0e0'},
+  {id:'other',  icon:'💫', label:'その他',            color:'#6a6090'},
+];
+
+// ── STATE ──
+let S = {
+  entries:[],
+  income:0, budget:0,
+  ticketFull:9400, ticketEve:6500,
+  currentMonth: new Date().toISOString().slice(0,7),
+};
+(function(){ try{const d=localStorage.getItem('dnkb3');if(d)S={...S,...JSON.parse(d)}}catch(e){} })();
+function saveS(){localStorage.setItem('dnkb3',JSON.stringify(S))}
+
+// ── HELPERS ──
+const fmt = n => '¥'+Math.round(n).toLocaleString();
+const monthEntries = () => S.entries.filter(e=>e.date&&e.date.startsWith(S.currentMonth));
+function catTotals(entries){
+  const t={};CATS.forEach(c=>t[c.id]=0);
+  entries.forEach(e=>(e.items||[]).forEach(i=>{t[i.cat]=(t[i.cat]||0)+(Number(i.amt)||0)}));
+  return t;
+}
+const grandTotal = ct => Object.values(ct).reduce((a,b)=>a+b,0);
+
+// ── NAV ──
+const renders={home:renderHome,entries:renderEntries,sim:renderSim,settings:renderSettings};
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bi').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  renders[id]();
+}
+function changeMonth(d){
+  let [y,m]=S.currentMonth.split('-').map(Number);
+  m+=d;
+  if(m>12){m=1;y++;}
+  if(m<1){m=12;y--;}
+  S.currentMonth=`${y}-${String(m).padStart(2,'0')}`;
+  setMonthLabel();
+  const active=document.querySelector('.page.active');
+  if(active)renders[active.id.replace('page-','')]();
+}
+function setMonthLabel(){
+  const[y,m]=S.currentMonth.split('-').map(Number);
+  document.getElementById('mlabel').textContent=`${y}年${m}月`;
+}
+
+// ── HOME ──
+function renderHome(){
+  const entries=monthEntries();
+  const ct=catTotals(entries);
+  const total=grandTotal(ct);
+  document.getElementById('hero-total').textContent=fmt(total);
+  document.getElementById('copy-val').textContent=fmt(total);
+
+  const copyBtn=document.getElementById('copy-btn');
+  copyBtn.style.display=total>0?'flex':'none';
+
+  // sub text
+  const income=Number(S.income)||0;
+  const budget=Number(S.budget)||0;
+  let sub='';
+  if(income>0){
+    const pct=(total/income*100).toFixed(1);
+    sub+=`手取りの <b>${pct}%</b>`;
+    if(budget>0){
+      const rem=budget-total;
+      sub+= rem>=0 ? `　予算まで残り <b>${fmt(rem)}</b>` : `　<span style="color:var(--red)">予算を ${fmt(-rem)} オーバー ⚠️</span>`;
+    }
+  } else if(budget>0){
+    const rem=budget-total;
+    sub= rem>=0 ? `予算まで残り <b>${fmt(rem)}</b>` : `<span style="color:var(--red)">予算を ${fmt(-rem)} オーバー ⚠️</span>`;
+  } else {
+    sub=total>0 ? '設定から収入・予算を登録するとより詳しく表示されます' : '「記録」タブから支出を追加しましょう';
+  }
+  document.getElementById('hero-sub').innerHTML=sub;
+
+  // catbars
+  const maxAmt=Math.max(...Object.values(ct),1);
+  const sorted=[...CATS].sort((a,b)=>(ct[b.id]||0)-(ct[a.id]||0)).filter(c=>ct[c.id]>0);
+  const list=document.getElementById('catbar-list');
+  if(!sorted.length){
+    list.innerHTML='';return;
+  }
+  list.innerHTML=sorted.map(c=>{
+    const amt=ct[c.id]||0;
+    const pct=total>0?(amt/total*100).toFixed(0)+'%':'—';
+    const bar=Math.round(amt/maxAmt*100);
+    const tips={
+      ticket:'夕方チケットへの切替で節約できる可能性があります',
+      food:'外食→インパで1回2,000〜3,000円削減できます',
+      goods:'欲しいものリストを事前に絞ると衝動買いが減ります',
+      clothes:'フリマ・古着でコーデコストを削減できます',
+      travel:'早割・EX予約で交通費を最大30〜50%削減できます',
+      hotel:'ミラコスタ以外も選択肢に入れると大幅節約になります',
+      collab:'「今月1点まで」などルールを決めると出費が安定します',
+      media:'年額プランへの切替で月割コストが下がります',
+    };
+    const tip=tips[c.id]?`<div class="catbar-tip">💡 ${tips[c.id]}</div>`:'';
+    return `<div class="catbar">
+      <div class="catbar-row">
+        <span class="catbar-name">${c.icon} ${c.label}</span>
+        <div class="catbar-right">
+          <span class="catbar-amount">${fmt(amt)}</span>
+          <span class="catbar-pct">${pct}</span>
+        </div>
+      </div>
+      <div class="track"><div class="fill" style="width:${bar}%;background:${c.color}"></div></div>
+      ${tip}
+    </div>`;
+  }).join('');
+}
+
+// ── COPY ──
+function copyTotal(){
+  const entries=monthEntries();
+  const ct=catTotals(entries);
+  const total=grandTotal(ct);
+  const [y,m]=S.currentMonth.split('-').map(Number);
+  const text=`${y}年${m}月 ディズニー代: ${fmt(total)}`;
+  navigator.clipboard.writeText(text).then(()=>showToast('クリップボードにコピーしました！'));
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// ── ENTRIES ──
+function renderEntries(){
+  const sorted=[...S.entries].sort((a,b)=>b.date.localeCompare(a.date));
+  const list=document.getElementById('entry-list');
+  if(!sorted.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">記録がありません。<br>「＋ 追加」から始めましょう。</div></div>`;
+    return;
+  }
+  list.innerHTML=sorted.map(e=>{
+    const idx=S.entries.indexOf(e);
+    const total=(e.items||[]).reduce((s,i)=>s+(Number(i.amt)||0),0);
+    const chips=(e.items||[]).filter(i=>Number(i.amt)>0).map(i=>{
+      const c=CATS.find(c=>c.id===i.cat)||{icon:'💫',label:i.cat};
+      return `<div class="chip">${c.icon} ${i.desc||c.label} <span>${fmt(i.amt)}</span></div>`;
+    }).join('');
+    return `<div class="entry">
+      <button class="del-btn" onclick="delEntry(${idx},event)">✕</button>
+      <div class="entry-row1">
+        <div>
+          <div class="entry-scene">${e.scene||''}</div>
+          <div class="entry-date">${(e.date||'').replace(/-/g,'/')}</div>
+          ${e.memo?`<div class="entry-memo">${e.memo}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--muted)">合計</div>
+          <div class="entry-total">${fmt(total)}</div>
+        </div>
+      </div>
+      ${chips?`<div class="chips">${chips}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function delEntry(idx,e){
+  e.stopPropagation();
+  if(confirm('この記録を削除しますか？')){S.entries.splice(idx,1);saveS();renderEntries();renderHome();}
+}
+
+// ── SIMULATION ──
+function renderSim(){
+  const entries=monthEntries();
+  const ct=catTotals(entries);
+  const total=grandTotal(ct);
+  const parkEntries=entries.filter(e=>['TDL','TDS','両パーク'].includes(e.scene));
+  const parkVisits=parkEntries.length||1;
+
+  const ticketTotal=ct.ticket||0;
+  const perVisitTicket= parkVisits>0 ? ticketTotal/parkVisits : 0;
+  // 夕方チケットは1DAYの約70%が目安（公式比率）
+  const eveRatio=0.70;
+  const ticketDiff=Math.round(perVisitTicket*(1-eveRatio));
+
+  const sims=[];
+
+  // 1. 夕方チケット
+  if(ticketTotal>0 && perVisitTicket>4000){
+    const saving=ticketDiff*parkVisits;
+    sims.push({
+      icon:'🌙',
+      title:'全日券→夕方チケットに切り替える',
+      body:`記録されたチケット代から1回あたり平均 <b>${fmt(perVisitTicket)}</b>。夕方券は概ね <b>1DAYの約70%</b> の価格帯なので、切り替えると1回あたり <b>${fmt(ticketDiff)}</b> の節約になります。<br>今月${parkVisits}回ぶん合計で <b>${fmt(saving)}</b> 浮く計算です。パレード・花火は夕方からでも十分楽しめます。`,
+      saving,
+    });
+  }
+
+  // 2. グッズを半分に
+  if((ct.goods||0)+(ct.collab||0)>0){
+    const goodsTotal=(ct.goods||0)+(ct.collab||0);
+    const saving=Math.round(goodsTotal*0.5);
+    sims.push({
+      icon:'🛍️',
+      title:'グッズ・コラボ購入を半分に絞る',
+      body:`今月のグッズ系は <b>${fmt(goodsTotal)}</b>。あらかじめ「今日はこれだけ」と決めて入場すると、衝動買いを <b class="grn">約半分</b> に抑えられるケースが多いです。<br>フリマで買う・誕生日だけ買うなどルールを作るのも有効。`,
+      saving,
+    });
+  }
+
+  // 3. フードを1食パーク外
+  if((ct.food||0)>0){
+    const saving=Math.round(Math.min((ct.food||0)*0.3, 3000*parkVisits));
+    sims.push({
+      icon:'🍽️',
+      title:'入場前にパーク外で食べてからインパ',
+      body:`パーク内フードの平均単価はパーク外の <b>1.5〜2倍</b> 程度。入場前に外で1食済ませると1回あたり <b>2,000〜3,000円</b> の節約になります。<br>今月のフード費 ${fmt(ct.food||0)} のうち約 <b class="grn">${fmt(saving)}</b> が浮く計算です。`,
+      saving,
+    });
+  }
+
+  // 4. 交通費：早割
+  if((ct.travel||0)>5000){
+    const saving=Math.round((ct.travel||0)*0.3);
+    sims.push({
+      icon:'🚄',
+      title:'EX早特・バス・夜行で交通費削減',
+      body:`EXこだま早特21・バスツアー・夜行バス等を活用すると交通費を <b>20〜40%</b> 削減できます。<br>今月の交通費 ${fmt(ct.travel||0)} が <b class="grn">${fmt(saving)}</b> 節約できる可能性があります。`,
+      saving,
+    });
+  }
+
+  // 5. 隔月インパ
+  if(total>0){
+    const saving=Math.round(total*0.5);
+    sims.push({
+      icon:'📅',
+      title:'月1回→隔月インパに変えると…',
+      body:`今月のディズニー支出 ${fmt(total)} が毎月続くと仮定すると、年間 <b style="color:var(--red)">${fmt(total*12)}</b>。<br>隔月（2ヶ月に1回）にするだけで年間 <b class="grn">${fmt(saving*12)}</b> が手元に残ります。<br>回数を減らした分、1回をより特別にする方法も選択肢です。`,
+      saving,
+    });
+  }
+
+  // 6. 宿泊削減
+  if((ct.hotel||0)>0){
+    const saving=Math.round((ct.hotel||0)*0.5);
+    sims.push({
+      icon:'🏨',
+      title:'ミラコスタ以外のホテルに変える',
+      body:`ディズニーオフィシャルホテルでも、ミラコスタ以外なら <b>1〜3万円/泊</b> 安くなるケースがあります。<br>ポップコーンバケットや朝イチ入場特典は引き続き使えます。`,
+      saving,
+    });
+  }
+
+  // 7. コーデ費
+  if((ct.clothes||0)>5000){
+    const saving=Math.round((ct.clothes||0)*0.5);
+    sims.push({
+      icon:'👗',
+      title:'コーデはフリマ・古着を活用する',
+      body:`ディズニーバウンドやコーデ費は <b>${fmt(ct.clothes||0)}</b>。メルカリ・Vinted等で探すと定価の <b>3〜5割程度</b> で入手できることも多いです。`,
+      saving,
+    });
+  }
+
+  if(!sims.length){
+    document.getElementById('sim-list').innerHTML=`<div class="empty"><div class="empty-icon">💡</div><div class="empty-text">今月の記録が少ないため<br>シミュレーションを表示できません。<br>支出を記録するとアドバイスが出ます。</div></div>`;
+    return;
+  }
+
+  document.getElementById('sim-list').innerHTML=sims.map(s=>`
+    <div class="sim-card">
+      <div class="sim-head"><span class="sim-icon">${s.icon}</span><span class="sim-title">${s.title}</span></div>
+      <div class="sim-body">${s.body}</div>
+      ${s.saving>0?`<div><span class="sim-saving">月 ${fmt(s.saving)} の節約 → 年 ${fmt(s.saving*12)}</span></div>`:''}
+    </div>
+  `).join('');
+}
+
+// ── SETTINGS ──
+function renderSettings(){
+  document.getElementById('set-income').value=S.income||'';
+  document.getElementById('set-budget').value=S.budget||'';
+}
+function saveSettings(){
+  S.income=Number(document.getElementById('set-income').value)||0;
+  S.budget=Number(document.getElementById('set-budget').value)||0;
+  saveS();
+}
+function exportData(){
+  const entries=monthEntries();
+  const ct=catTotals(entries);
+  const total=grandTotal(ct);
+  const[y,m]=S.currentMonth.split('-').map(Number);
+  const text=`${y}年${m}月 ディズニー代: ${fmt(total)}\n\n`
+    +CATS.filter(c=>(ct[c.id]||0)>0).map(c=>`${c.label}: ${fmt(ct[c.id])}`).join('\n');
+  navigator.clipboard.writeText(text).then(()=>showToast('コピーしました！'));
+}
+function clearData(){
+  if(confirm('全データを削除しますか？')){S.entries=[];saveS();alert('リセットしました。');}
+}
+
+// ── MODAL ──
+function openModal(){
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('f-scene').value='TDL';
+  document.getElementById('f-memo').value='';
+  document.getElementById('erows').innerHTML='';
+  addRow('ticket','',0);
+  updTotal();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open')}
+function overlayClick(e){if(e.target===document.getElementById('modal-overlay'))closeModal()}
+function addRow(cat='goods',desc='',amt=''){
+  const div=document.createElement('div');
+  div.className='erow';
+  div.innerHTML=`
+    <select onchange="updTotal()">
+      ${CATS.map(c=>`<option value="${c.id}" ${c.id===cat?'selected':''}>${c.icon}${c.label}</option>`).join('')}
+    </select>
+    <input type="text" placeholder="内容" value="${desc}">
+    <input type="number" placeholder="0" value="${amt||''}" oninput="updTotal()" style="text-align:right">
+    <button class="btn-del-row" onclick="this.parentElement.remove();updTotal()">✕</button>`;
+  document.getElementById('erows').appendChild(div);
+}
+function updTotal(){
+  const t=[...document.querySelectorAll('#erows input[type=number]')].reduce((s,i)=>s+(Number(i.value)||0),0);
+  document.getElementById('modal-total').textContent=fmt(t);
+}
+function saveEntry(){
+  const date=document.getElementById('f-date').value;
+  if(!date){alert('日付を選択してください');return}
+  const items=[];
+  document.querySelectorAll('#erows .erow').forEach(row=>{
+    const cat=row.querySelector('select').value;
+    const desc=row.querySelectorAll('input')[0].value;
+    const amt=Number(row.querySelectorAll('input')[1].value)||0;
+    if(amt>0)items.push({cat,desc,amt});
+  });
+  S.entries.push({date,scene:document.getElementById('f-scene').value,memo:document.getElementById('f-memo').value,items});
+  saveS();closeModal();renderEntries();renderHome();
+}
+
+// ── INIT ──
+setMonthLabel();
+renderHome();
+</script>
+</body>
+</html>
