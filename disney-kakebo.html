@@ -89,6 +89,36 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .edit-btn{background:none;border:none;font-size:14px;cursor:pointer;padding:2px;opacity:.5}
 .edit-btn:hover{opacity:1}
 
+/* CALENDAR */
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+.cal-wd{text-align:center;font-size:10px;color:var(--muted);padding:4px 0;letter-spacing:1px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-cell{min-height:52px;border-radius:8px;padding:4px;position:relative;background:var(--s1);border:1px solid var(--bd)}
+.cal-cell.other-month{opacity:.3}
+.cal-cell.today{border-color:var(--acc)}
+.cal-day{font-size:11px;color:var(--tx2);margin-bottom:2px}
+.cal-cell.today .cal-day{color:var(--acc);font-weight:500}
+.cal-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);margin:1px auto}
+.cal-amt{font-size:9px;color:var(--gold);text-align:center;margin-top:1px}
+.cal-ev-bars{position:absolute;bottom:2px;left:2px;right:2px;display:flex;flex-direction:column;gap:1px}
+.cal-ev-bar{height:3px;border-radius:2px;opacity:.85}
+.ev-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.ev-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2)}
+.ev-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.cal-detail-card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-top:14px}
+.cal-detail-title{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.ev-setting-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.ev-setting-item:last-child{border-bottom:none}
+.ev-setting-dot{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+.ev-setting-info{flex:1}
+.ev-setting-name{font-size:13px;color:var(--tx)}
+.ev-setting-dates{font-size:11px;color:var(--muted);margin-top:2px}
+.ev-actions{display:flex;gap:6px}
+.ev-edit-btn{background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer}
+.ev-del-btn{background:none;border:1px solid rgba(255,107,122,.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer}
+.color-swatch{width:28px;height:28px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:border-color .15s}
+.color-swatch.selected{border-color:#fff}
+
 .empty{text-align:center;padding:50px 20px;color:var(--muted)}
 .empty-icon{font-size:44px;margin-bottom:12px}
 .empty-text{font-size:13px;line-height:1.8}
@@ -187,13 +217,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div id="entry-list"></div>
 </div>
 
-<!-- SIMULATION -->
-<div class="page" id="page-sim">
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-title">節約シミュレーション</div>
-    <div style="font-size:12px;color:var(--tx2);line-height:1.7">今月の支出パターンをもとに、<b style="color:var(--tx)">具体的な代替案と削減額</b>を計算しています。</div>
-  </div>
-  <div id="sim-list"></div>
+<!-- CALENDAR -->
+<div class="page" id="page-cal">
+  <div id="cal-events-bar"></div>
+  <div id="cal-grid"></div>
+  <div id="cal-detail"></div>
 </div>
 
 <!-- SETTINGS -->
@@ -211,8 +239,31 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="snote">入力すると手取り比率・予算進捗が表示されます。未入力でも使えます。</div>
   </div>
   <div class="scard">
+    <div class="stitle">カレンダー設定</div>
+    <div class="srow">
+      <span class="srow-label">📅 週の始まり</span>
+      <select class="sinput" id="set-week-start" onchange="saveSettings()" style="width:130px;text-align:left;padding:10px 12px">
+        <option value="0">日曜日</option>
+        <option value="1">月曜日</option>
+      </select>
+    </div>
+    <div class="srow">
+      <span class="srow-label">🗓️ 月の締め日</span>
+      <select class="sinput" id="set-month-start" onchange="saveSettings()" style="width:130px;text-align:left;padding:10px 12px">
+        <option value="1">1日締め（暦通り）</option>
+      </select>
+    </div>
+    <div class="snote">締め日を設定すると、カレンダーの「今月」がその締め日ベースで集計されます。例：25日締めなら前月26日〜当月25日が1ヶ月分。</div>
+  </div>
+  <div class="scard">
+    <div class="stitle">イベント管理</div>
+    <div id="event-list-settings"></div>
+    <button class="wbtn" onclick="openEventModal()" style="background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc);margin-top:4px">＋ イベントを追加</button>
+  </div>
+  <div class="scard">
     <div class="stitle">データ管理</div>
-    <button class="wbtn" onclick="exportData()" style="background:var(--s2);border:1px solid var(--bd);color:var(--tx2)">📋 データをコピー（バックアップ）</button>
+    <button class="wbtn" onclick="exportData()" style="background:var(--s2);border:1px solid var(--bd);color:var(--tx2)">💾 バックアップデータをコピー（復元用）</button>
+    <button class="wbtn" onclick="exportSummary()" style="background:var(--s2);border:1px solid var(--bd);color:var(--tx2)">📋 今月の集計をコピー（家計簿用）</button>
     <div style="margin-bottom:10px">
       <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">📲 バックアップから復元</div>
       <textarea id="restore-input" placeholder="バックアップデータをここに貼り付け" style="width:100%;height:80px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;color:var(--tx);font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;outline:none;resize:none;line-height:1.5"></textarea>
@@ -225,7 +276,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div class="bnav">
   <div class="bi active" onclick="showPage('home',this)"><div class="bi-icon">🏰</div>今月</div>
   <div class="bi" onclick="showPage('entries',this)"><div class="bi-icon">📝</div>記録</div>
-  <div class="bi" onclick="showPage('sim',this)"><div class="bi-icon">💡</div>節約案</div>
+  <div class="bi" onclick="showPage('cal',this)"><div class="bi-icon">📅</div>カレンダー</div>
   <div class="bi" onclick="showPage('settings',this)"><div class="bi-icon">⚙️</div>設定</div>
 </div>
 
@@ -286,6 +337,34 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
+<!-- EVENT MODAL -->
+<div class="overlay" id="event-modal-overlay" onclick="overlayClickEvent(event)">
+  <div class="modal">
+    <div class="modal-bar"></div>
+    <div class="modal-title" id="event-modal-title">イベントを追加</div>
+    <div class="field">
+      <label class="field-label">イベント名</label>
+      <input type="text" id="ev-name" placeholder="例：ハロウィン・オン・ザ・ボーダー">
+    </div>
+    <div class="field">
+      <label class="field-label">開始日</label>
+      <input type="date" id="ev-start">
+    </div>
+    <div class="field">
+      <label class="field-label">終了日</label>
+      <input type="date" id="ev-end">
+    </div>
+    <div class="field">
+      <label class="field-label">カラー</label>
+      <div id="ev-colors" style="display:flex;gap:10px;flex-wrap:wrap;padding:4px 0"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEventModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveEvent()">保存する</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -305,8 +384,10 @@ const CATS = [
 // ── STATE ──
 let S = {
   entries:[],
+  events:[],
   income:0, budget:0,
-  ticketFull:9400, ticketEve:6500,
+  weekStart:0,
+  monthStart:1,
   currentMonth: new Date().toISOString().slice(0,7),
 };
 (function(){ try{const d=localStorage.getItem('dnkb3');if(d)S={...S,...JSON.parse(d)}}catch(e){} })();
@@ -314,7 +395,19 @@ function saveS(){localStorage.setItem('dnkb3',JSON.stringify(S))}
 
 // ── HELPERS ──
 const fmt = n => '¥'+Math.round(n).toLocaleString();
-const monthEntries = () => S.entries.filter(e=>e.date&&e.date.startsWith(S.currentMonth));
+const monthEntries = () => {
+  const [y,m] = S.currentMonth.split('-').map(Number);
+  const startDay = Number(S.monthStart)||1;
+  if(startDay===1){
+    return S.entries.filter(e=>e.date&&e.date.startsWith(S.currentMonth));
+  }
+  // 締め日ベース: 前月startDay日 〜 当月(startDay-1)日
+  const from = new Date(y,m-2,startDay);
+  const to   = new Date(y,m-1,startDay-1);
+  const fromStr = from.toISOString().slice(0,10);
+  const toStr   = to.toISOString().slice(0,10);
+  return S.entries.filter(e=>e.date&&e.date>=fromStr&&e.date<=toStr);
+};
 function catTotals(entries){
   const t={};CATS.forEach(c=>t[c.id]=0);
   entries.forEach(e=>(e.items||[]).forEach(i=>{t[i.cat]=(t[i.cat]||0)+(Number(i.amt)||0)}));
@@ -323,7 +416,7 @@ function catTotals(entries){
 const grandTotal = ct => Object.values(ct).reduce((a,b)=>a+b,0);
 
 // ── NAV ──
-const renders={home:renderHome,entries:renderEntries,sim:renderSim,settings:renderSettings};
+const renders={home:renderHome,entries:renderEntries,cal:renderCal,settings:renderSettings};
 function showPage(id,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.bi').forEach(b=>b.classList.remove('active'));
@@ -455,125 +548,217 @@ function delEntry(idx,e){
   if(confirm('この記録を削除しますか？')){S.entries.splice(idx,1);saveS();renderEntries();renderHome();}
 }
 
-// ── SIMULATION ──
-function renderSim(){
-  const entries=monthEntries();
-  const ct=catTotals(entries);
-  const total=grandTotal(ct);
-  const parkEntries=entries.filter(e=>['TDL','TDS','両パーク'].includes(e.scene));
-  const parkVisits=parkEntries.length||1;
+// ── CALENDAR ──
+const EV_COLORS=['#b48cff','#5cdba8','#f0c060','#ff6b7a','#5c9be0','#e05c8a','#60c0e0','#e8a85c'];
+let editingEvIdx=null;
+let selectedColor=EV_COLORS[0];
 
-  const ticketTotal=ct.ticket||0;
-  const perVisitTicket= parkVisits>0 ? ticketTotal/parkVisits : 0;
-  // 夕方チケットは1DAYの約70%が目安（公式比率）
-  const eveRatio=0.70;
-  const ticketDiff=Math.round(perVisitTicket*(1-eveRatio));
+function renderCal(){
+  const [y,m]=S.currentMonth.split('-').map(Number);
+  const weekStart = Number(S.weekStart)||0; // 0=Sun, 1=Mon
+  const WEEKDAYS_SUN = ['日','月','火','水','木','金','土'];
+  const WEEKDAYS_MON = ['月','火','水','木','金','土','日'];
+  const weekdays = weekStart===1 ? WEEKDAYS_MON : WEEKDAYS_SUN;
 
-  const sims=[];
+  // firstDayを週の始まり基準にオフセット
+  const rawFirst = new Date(y,m-1,1).getDay(); // 0=Sun
+  const firstOffset = (rawFirst - weekStart + 7) % 7;
+  const daysInMonth=new Date(y,m,0).getDate();
+  const today=new Date().toISOString().slice(0,10);
 
-  // 1. 夕方チケット
-  if(ticketTotal>0 && perVisitTicket>4000){
-    const saving=ticketDiff*parkVisits;
-    sims.push({
-      icon:'🌙',
-      title:'全日券→夕方チケットに切り替える',
-      body:`記録されたチケット代から1回あたり平均 <b>${fmt(perVisitTicket)}</b>。夕方券は概ね <b>1DAYの約70%</b> の価格帯なので、切り替えると1回あたり <b>${fmt(ticketDiff)}</b> の節約になります。<br>今月${parkVisits}回ぶん合計で <b>${fmt(saving)}</b> 浮く計算です。パレード・花火は夕方からでも十分楽しめます。`,
-      saving,
-    });
+  // イベント凡例
+  const monthEvents=(S.events||[]).filter(ev=>{
+    return ev.start<=`${y}-${String(m).padStart(2,'0')}-31` && ev.end>=`${y}-${String(m).padStart(2,'0')}-01`;
+  });
+  const evBar=document.getElementById('cal-events-bar');
+  evBar.innerHTML=monthEvents.length ? `<div class="ev-legend">${monthEvents.map(ev=>
+    `<div class="ev-legend-item"><div class="ev-legend-dot" style="background:${ev.color}"></div>${ev.name}</div>`
+  ).join('')}</div>` : '';
+
+  // 支出マップ
+  const spendMap={};
+  S.entries.forEach(e=>{
+    if(!e.date) return;
+    const amt=(e.items||[]).reduce((s,i)=>s+(Number(i.amt)||0),0);
+    spendMap[e.date]=(spendMap[e.date]||0)+amt;
+  });
+
+  // カレンダーグリッド
+  const cells=[];
+  // 前月の空白
+  for(let i=0;i<firstOffset;i++) cells.push({day:null});
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const spent=spendMap[dateStr]||0;
+    // この日に重なるイベント
+    const dayEvents=(S.events||[]).filter(ev=>ev.start<=dateStr&&ev.end>=dateStr);
+    cells.push({day:d, date:dateStr, spent, dayEvents, isToday:dateStr===today});
   }
 
-  // 2. グッズを半分に
-  if((ct.goods||0)+(ct.collab||0)>0){
-    const goodsTotal=(ct.goods||0)+(ct.collab||0);
-    const saving=Math.round(goodsTotal*0.5);
-    sims.push({
-      icon:'🛍️',
-      title:'グッズ・コラボ購入を半分に絞る',
-      body:`今月のグッズ系は <b>${fmt(goodsTotal)}</b>。あらかじめ「今日はこれだけ」と決めて入場すると、衝動買いを <b class="grn">約半分</b> に抑えられるケースが多いです。<br>フリマで買う・誕生日だけ買うなどルールを作るのも有効。`,
-      saving,
-    });
-  }
-
-  // 3. フードを1食パーク外
-  if((ct.food||0)>0){
-    const saving=Math.round(Math.min((ct.food||0)*0.3, 3000*parkVisits));
-    sims.push({
-      icon:'🍽️',
-      title:'入場前にパーク外で食べてからインパ',
-      body:`パーク内フードの平均単価はパーク外の <b>1.5〜2倍</b> 程度。入場前に外で1食済ませると1回あたり <b>2,000〜3,000円</b> の節約になります。<br>今月のフード費 ${fmt(ct.food||0)} のうち約 <b class="grn">${fmt(saving)}</b> が浮く計算です。`,
-      saving,
-    });
-  }
-
-  // 4. 交通費：早割
-  if((ct.travel||0)>5000){
-    const saving=Math.round((ct.travel||0)*0.3);
-    sims.push({
-      icon:'🚄',
-      title:'EX早特・バス・夜行で交通費削減',
-      body:`EXこだま早特21・バスツアー・夜行バス等を活用すると交通費を <b>20〜40%</b> 削減できます。<br>今月の交通費 ${fmt(ct.travel||0)} が <b class="grn">${fmt(saving)}</b> 節約できる可能性があります。`,
-      saving,
-    });
-  }
-
-  // 5. 隔月インパ
-  if(total>0){
-    const saving=Math.round(total*0.5);
-    sims.push({
-      icon:'📅',
-      title:'月1回→隔月インパに変えると…',
-      body:`今月のディズニー支出 ${fmt(total)} が毎月続くと仮定すると、年間 <b style="color:var(--red)">${fmt(total*12)}</b>。<br>隔月（2ヶ月に1回）にするだけで年間 <b class="grn">${fmt(saving*12)}</b> が手元に残ります。<br>回数を減らした分、1回をより特別にする方法も選択肢です。`,
-      saving,
-    });
-  }
-
-  // 6. 宿泊削減
-  if((ct.hotel||0)>0){
-    const saving=Math.round((ct.hotel||0)*0.5);
-    sims.push({
-      icon:'🏨',
-      title:'ミラコスタ以外のホテルに変える',
-      body:`ディズニーオフィシャルホテルでも、ミラコスタ以外なら <b>1〜3万円/泊</b> 安くなるケースがあります。<br>ポップコーンバケットや朝イチ入場特典は引き続き使えます。`,
-      saving,
-    });
-  }
-
-  // 7. コーデ費
-  if((ct.clothes||0)>5000){
-    const saving=Math.round((ct.clothes||0)*0.5);
-    sims.push({
-      icon:'👗',
-      title:'コーデはフリマ・古着を活用する',
-      body:`ディズニーバウンドやコーデ費は <b>${fmt(ct.clothes||0)}</b>。メルカリ・Vinted等で探すと定価の <b>3〜5割程度</b> で入手できることも多いです。`,
-      saving,
-    });
-  }
-
-  if(!sims.length){
-    document.getElementById('sim-list').innerHTML=`<div class="empty"><div class="empty-icon">💡</div><div class="empty-text">今月の記録が少ないため<br>シミュレーションを表示できません。<br>支出を記録するとアドバイスが出ます。</div></div>`;
-    return;
-  }
-
-  document.getElementById('sim-list').innerHTML=sims.map(s=>`
-    <div class="sim-card">
-      <div class="sim-head"><span class="sim-icon">${s.icon}</span><span class="sim-title">${s.title}</span></div>
-      <div class="sim-body">${s.body}</div>
-      ${s.saving>0?`<div><span class="sim-saving">月 ${fmt(s.saving)} の節約 → 年 ${fmt(s.saving*12)}</span></div>`:''}
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML=`
+    <div class="cal-weekdays">
+      ${weekdays.map(w=>`<div class="cal-wd">${w}</div>`).join('')}
     </div>
-  `).join('');
+    <div class="cal-grid">
+      ${cells.map(c=>{
+        if(!c.day) return `<div class="cal-cell other-month"></div>`;
+        const bars=c.dayEvents.map(ev=>
+          `<div class="cal-ev-bar" style="background:${ev.color}"></div>`
+        ).join('');
+        return `<div class="cal-cell${c.isToday?' today':''}" onclick="showCalDetail('${c.date}')">
+          <div class="cal-day">${c.day}</div>
+          ${c.spent>0?`<div class="cal-dot"></div><div class="cal-amt">${Math.round(c.spent/1000)}k</div>`:''}
+          ${bars?`<div class="cal-ev-bars">${bars}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  document.getElementById('cal-detail').innerHTML='';
+}
+
+function showCalDetail(date){
+  const entries=S.entries.filter(e=>e.date===date);
+  const eventsOnDay=(S.events||[]).filter(ev=>ev.start<=date&&ev.end>=date);
+  if(!entries.length && !eventsOnDay.length) return;
+
+  const dateLabel=date.replace(/-/g,'/');
+  let html=`<div class="cal-detail-card"><div class="cal-detail-title">${dateLabel}</div>`;
+
+  if(eventsOnDay.length){
+    html+=eventsOnDay.map(ev=>
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:10px;height:10px;border-radius:3px;background:${ev.color};flex-shrink:0"></div>
+        <span style="font-size:12px;color:var(--tx2)">${ev.name}</span>
+      </div>`
+    ).join('');
+  }
+
+  if(entries.length){
+    entries.forEach(e=>{
+      const total=(e.items||[]).reduce((s,i)=>s+(Number(i.amt)||0),0);
+      html+=`<div style="border-top:1px solid var(--bd);padding-top:10px;margin-top:6px">
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:12px;color:var(--muted)">${e.scene||''} ${e.memo?'— '+e.memo:''}</span>
+          <span style="font-family:'Playfair Display',serif;font-size:16px;color:var(--gold)">${fmt(total)}</span>
+        </div>
+      </div>`;
+    });
+  }
+
+  html+='</div>';
+  document.getElementById('cal-detail').innerHTML=html;
+}
+
+// ── EVENT MODAL ──
+function openEventModal(idx=null){
+  editingEvIdx=idx;
+  selectedColor=EV_COLORS[0];
+  const modal=document.getElementById('event-modal-overlay');
+  document.getElementById('event-modal-title').textContent= idx!==null ? 'イベントを編集' : 'イベントを追加';
+
+  if(idx!==null){
+    const ev=S.events[idx];
+    document.getElementById('ev-name').value=ev.name;
+    document.getElementById('ev-start').value=ev.start;
+    document.getElementById('ev-end').value=ev.end;
+    selectedColor=ev.color;
+  } else {
+    document.getElementById('ev-name').value='';
+    document.getElementById('ev-start').value='';
+    document.getElementById('ev-end').value='';
+  }
+
+  // カラーパレット
+  document.getElementById('ev-colors').innerHTML=EV_COLORS.map(c=>
+    `<div class="color-swatch${c===selectedColor?' selected':''}" style="background:${c}" onclick="selectColor('${c}',this)"></div>`
+  ).join('');
+
+  modal.classList.add('open');
+}
+function closeEventModal(){
+  document.getElementById('event-modal-overlay').classList.remove('open');
+}
+function overlayClickEvent(e){
+  if(e.target===document.getElementById('event-modal-overlay'))closeEventModal();
+}
+function selectColor(c,el){
+  selectedColor=c;
+  document.querySelectorAll('#ev-colors .color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function saveEvent(){
+  const name=document.getElementById('ev-name').value.trim();
+  const start=document.getElementById('ev-start').value;
+  const end=document.getElementById('ev-end').value;
+  if(!name||!start||!end){alert('名前・開始日・終了日を入力してください');return;}
+  if(start>end){alert('開始日は終了日より前にしてください');return;}
+  const ev={name,start,end,color:selectedColor};
+  if(!S.events) S.events=[];
+  if(editingEvIdx!==null){ S.events[editingEvIdx]=ev; }
+  else { S.events.push(ev); }
+  saveS();
+  closeEventModal();
+  renderSettings();
+  renderCal();
+}
+function deleteEvent(idx){
+  if(confirm('このイベントを削除しますか？')){
+    S.events.splice(idx,1);
+    saveS();
+    renderSettings();
+    renderCal();
+  }
 }
 
 // ── SETTINGS ──
 function renderSettings(){
   document.getElementById('set-income').value=S.income||'';
   document.getElementById('set-budget').value=S.budget||'';
+  // 締め日のoption生成
+  const ms = document.getElementById('set-month-start');
+  if(ms.options.length===1){
+    for(let d=2;d<=28;d++){
+      const o=document.createElement('option');
+      o.value=d; o.textContent=`${d}日締め`;
+      ms.appendChild(o);
+    }
+  }
+  document.getElementById('set-week-start').value=String(S.weekStart||0);
+  document.getElementById('set-month-start').value=String(S.monthStart||1);
+
+  const evList=document.getElementById('event-list-settings');
+  const events=S.events||[];
+  if(!events.length){
+    evList.innerHTML=`<div style="font-size:12px;color:var(--muted);padding:8px 0">まだイベントがありません</div>`;
+  } else {
+    evList.innerHTML=events.map((ev,i)=>`
+      <div class="ev-setting-item">
+        <div class="ev-setting-dot" style="background:${ev.color}"></div>
+        <div class="ev-setting-info">
+          <div class="ev-setting-name">${ev.name}</div>
+          <div class="ev-setting-dates">${ev.start.replace(/-/g,'/')} 〜 ${ev.end.replace(/-/g,'/')}</div>
+        </div>
+        <div class="ev-actions">
+          <button class="ev-edit-btn" onclick="openEventModal(${i})">編集</button>
+          <button class="ev-del-btn" onclick="deleteEvent(${i})">削除</button>
+        </div>
+      </div>
+    `).join('');
+  }
 }
 function saveSettings(){
   S.income=Number(document.getElementById('set-income').value)||0;
   S.budget=Number(document.getElementById('set-budget').value)||0;
+  S.weekStart=Number(document.getElementById('set-week-start').value)||0;
+  S.monthStart=Number(document.getElementById('set-month-start').value)||1;
   saveS();
 }
 function exportData(){
+  const text = JSON.stringify(S);
+  navigator.clipboard.writeText(text).then(()=>showToast('バックアップデータをコピーしました！'));
+}
+function exportSummary(){
   const entries=monthEntries();
   const ct=catTotals(entries);
   const total=grandTotal(ct);
