@@ -187,6 +187,27 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-cancel{flex:1;background:none;border:1px solid var(--bd);color:var(--muted);border-radius:12px;padding:14px;font-family:'Zen Kaku Gothic New',sans-serif;cursor:pointer;font-size:14px}
 .btn-save{flex:2;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff;border-radius:12px;padding:14px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:500;cursor:pointer;font-size:14px;letter-spacing:.5px}
 
+/* SUBTABS */
+.subtab-wrap{display:flex;gap:4px;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:4px;margin-bottom:16px}
+.subtab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:12px;letter-spacing:1px;color:var(--muted);cursor:pointer;transition:all .2s}
+.subtab.active{background:var(--s3);color:var(--tx)}
+
+/* RANGE BUTTONS */
+.range-btn{background:var(--s2);border:1px solid var(--bd);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:11px;font-family:'Zen Kaku Gothic New',sans-serif;cursor:pointer;transition:all .15s}
+.range-btn.active{background:var(--acc2);border-color:var(--acc);color:#fff}
+
+/* MONTHLY CHART */
+.chart-bar-wrap{display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 4px}
+.chart-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:32px}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;transition:height .6s cubic-bezier(.2,.8,.4,1);min-height:2px}
+.chart-label{font-size:9px;color:var(--muted);white-space:nowrap}
+.chart-amt{font-size:9px;color:var(--tx2)}
+
+/* SHARE CARD STAT BOX */
+.sc-stat{background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px}
+.sc-stat-label{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:4px}
+.sc-stat-val{font-family:'Playfair Display',serif;font-size:18px;color:#e8e0ff}
+
 /* SETTINGS */
 .scard{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:14px}
 .stitle{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:16px}
@@ -220,47 +241,92 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <!-- HOME -->
 <div class="page active" id="page-home">
 
-  <div class="hero">
-    <div class="hero-label">今月のディズニー総支出</div>
-    <div class="hero-amount" id="hero-total">¥0</div>
-    <div class="hero-sub" id="hero-sub">記録を追加してください</div>
+  <!-- サブタブ -->
+  <div class="subtab-wrap">
+    <div class="subtab active" id="stab-now" onclick="showSubtab('now')">今月</div>
+    <div class="subtab" id="stab-stats" onclick="showSubtab('stats')">統計</div>
+  </div>
 
-    <div id="budget-gauge" style="display:none;margin-top:18px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-        <span style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">予算</span>
-        <span style="font-size:11px;color:var(--tx2)" id="gauge-label">—</span>
-      </div>
-      <!-- 手取りゲージ -->
-      <div id="income-gauge-wrap" style="display:none;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">
-          <span>手取り比率</span><span id="income-pct-label">0%</span>
+  <!-- 今月タブ -->
+  <div id="sub-now">
+    <div class="hero">
+      <div class="hero-label">今月のディズニー総支出</div>
+      <div class="hero-amount" id="hero-total">¥0</div>
+      <div class="hero-sub" id="hero-sub">記録を追加してください</div>
+      <div id="budget-gauge" style="display:none;margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">予算</span>
+          <span style="font-size:11px;color:var(--tx2)" id="gauge-label">—</span>
         </div>
-        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden">
-          <div id="income-bar" class="gauge-bar-inner" style="height:100%;width:0%;border-radius:4px"></div>
+        <div id="income-gauge-wrap" style="display:none;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">
+            <span>手取り比率</span><span id="income-pct-label">0%</span>
+          </div>
+          <div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden">
+            <div id="income-bar" class="gauge-bar-inner" style="height:100%;width:0%;border-radius:4px"></div>
+          </div>
         </div>
-      </div>
-      <!-- 予算ゲージ -->
-      <div id="budget-gauge-wrap" style="display:none">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px">
-          <span>予算消化</span><span id="budget-pct-label">0%</span>
-        </div>
-        <div style="height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
-          <div id="budget-bar" class="gauge-bar-inner" style="height:100%;width:0%;border-radius:5px"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px">
-          <span style="color:var(--muted)">残り</span>
-          <span id="budget-remain" style="font-family:'Playfair Display',serif;font-size:16px"></span>
+        <div id="budget-gauge-wrap" style="display:none">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px">
+            <span>予算消化</span><span id="budget-pct-label">0%</span>
+          </div>
+          <div style="height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
+            <div id="budget-bar" class="gauge-bar-inner" style="height:100%;width:0%;border-radius:5px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px">
+            <span style="color:var(--muted)">残り</span>
+            <span id="budget-remain" style="font-family:'Playfair Display',serif;font-size:16px"></span>
+          </div>
         </div>
       </div>
     </div>
+    <div class="section-head">
+      <span class="section-label">カテゴリ別内訳</span>
+    </div>
+    <div id="catbar-list"></div>
   </div>
 
-  <!-- CATEGORY BREAKDOWN -->
-  <div class="section-head">
-    <span class="section-label">カテゴリ別内訳</span>
-  </div>
-  <div id="catbar-list"></div>
+  <!-- 統計タブ -->
+  <div id="sub-stats" style="display:none">
 
+    <!-- 1インパ平均 -->
+    <div class="scard" style="margin-bottom:14px">
+      <div class="stitle">1インパあたりの平均支出</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="range-btn active" onclick="setRange('3m',this)">直近3ヶ月</button>
+        <button class="range-btn" onclick="setRange('6m',this)">直近6ヶ月</button>
+        <button class="range-btn" onclick="setRange('1y',this)">直近1年</button>
+        <button class="range-btn" onclick="setRange('all',this)">全期間</button>
+      </div>
+      <div id="avg-display"></div>
+    </div>
+
+    <!-- 月別推移グラフ -->
+    <div class="scard" style="margin-bottom:14px">
+      <div class="stitle">月別支出推移</div>
+      <div style="overflow-x:auto;padding-bottom:4px">
+        <div id="monthly-chart" style="min-width:280px"></div>
+      </div>
+    </div>
+
+    <!-- シェア用サマリー -->
+    <div class="scard" style="margin-bottom:14px">
+      <div class="stitle">シェア用サマリー</div>
+      <div id="share-card" style="background:linear-gradient(135deg,#0d1f3c,#1a1035);border-radius:16px;padding:20px;margin-bottom:14px">
+        <div style="font-size:9px;letter-spacing:3px;color:rgba(180,140,255,.6);text-transform:uppercase;margin-bottom:12px">✦ Disney Kakebo</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px" id="sc-month">—</div>
+        <div style="font-family:'Playfair Display',serif;font-size:40px;color:#f0c060;line-height:1;margin-bottom:16px" id="sc-total">¥0</div>
+        <div id="sc-cats" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="sc-stats"></div>
+        <div style="margin-top:14px;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1px">kay0010.github.io/disney-kakebo</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="saveShareImage()" class="wbtn" style="flex:1;margin-bottom:0;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff">💾 画像として保存</button>
+        <button onclick="if(typeof navigator.share==='function'){shareStats()}else{copyAppUrl()}" class="wbtn" style="flex:1;margin-bottom:0;background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc)">📤 共有する</button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- ENTRIES -->
@@ -586,6 +652,17 @@ function setMonthLabel(){
   document.getElementById('mlabel').textContent=`${y}年${m}月`;
 }
 
+// ── SUBTAB ──
+let currentSubtab = 'now';
+function showSubtab(id){
+  currentSubtab = id;
+  document.getElementById('sub-now').style.display = id==='now' ? 'block' : 'none';
+  document.getElementById('sub-stats').style.display = id==='stats' ? 'block' : 'none';
+  document.getElementById('stab-now').classList.toggle('active', id==='now');
+  document.getElementById('stab-stats').classList.toggle('active', id==='stats');
+  if(id==='stats') renderStats();
+}
+
 // ── HOME ──
 function renderHome(){
   const entries=monthEntries();
@@ -693,7 +770,172 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2400);
 }
 
-// ── ENTRIES ──
+// ── STATS ──
+let currentRange = '3m';
+function setRange(range, el){
+  currentRange = range;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderStats();
+}
+
+function getRangeEntries(range){
+  const now = new Date();
+  const cutoff = new Date();
+  if(range==='3m') cutoff.setMonth(now.getMonth()-3);
+  else if(range==='6m') cutoff.setMonth(now.getMonth()-6);
+  else if(range==='1y') cutoff.setFullYear(now.getFullYear()-1);
+  else return S.entries; // all
+  const cutStr = cutoff.toISOString().slice(0,10);
+  return S.entries.filter(e=>e.date&&e.date>=cutStr);
+}
+
+function renderStats(){
+  const rangeEntries = getRangeEntries(currentRange);
+
+  // 1インパ平均
+  const parkEntries = rangeEntries.filter(e=>['TDL','TDS','両パーク','海外パーク'].includes(e.scene));
+  const parkVisits = parkEntries.length;
+  const parkTotal = parkEntries.reduce((s,e)=>(e.items||[]).reduce((ss,i)=>ss+(Number(i.amt)||0),s),0);
+  const avg = parkVisits>0 ? Math.round(parkTotal/parkVisits) : 0;
+  const allTotal = rangeEntries.reduce((s,e)=>(e.items||[]).reduce((ss,i)=>ss+(Number(i.amt)||0),s),0);
+
+  document.getElementById('avg-display').innerHTML = parkVisits>0 ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="sc-stat">
+        <div class="sc-stat-label">1インパ平均</div>
+        <div class="sc-stat-val">${fmt(avg)}</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat-label">パーク訪問回数</div>
+        <div class="sc-stat-val">${parkVisits}回</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat-label">期間総支出</div>
+        <div class="sc-stat-val" style="font-size:15px">${fmt(allTotal)}</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat-label">パーク外含む平均/月</div>
+        <div class="sc-stat-val" style="font-size:15px">${fmt(Math.round(allTotal/Math.max(getMonthCount(currentRange),1)))}</div>
+      </div>
+    </div>
+  ` : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">この期間のパーク訪問記録がありません</div>`;
+
+  // 月別グラフ
+  renderMonthlyChart();
+
+  // シェアカード
+  renderShareCard();
+}
+
+function getMonthCount(range){
+  if(range==='3m') return 3;
+  if(range==='6m') return 6;
+  if(range==='1y') return 12;
+  // all: 最初の記録からの月数
+  if(!S.entries.length) return 1;
+  const sorted = [...S.entries].sort((a,b)=>a.date>b.date?1:-1);
+  const first = new Date(sorted[0].date);
+  const now = new Date();
+  return Math.max(1, (now.getFullYear()-first.getFullYear())*12+(now.getMonth()-first.getMonth())+1);
+}
+
+function renderMonthlyChart(){
+  // 過去6ヶ月分のデータを集計
+  const months = [];
+  const now = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = `${d.getMonth()+1}月`;
+    const total = S.entries
+      .filter(e=>e.date&&e.date.startsWith(key))
+      .reduce((s,e)=>(e.items||[]).reduce((ss,i)=>ss+(Number(i.amt)||0),s),0);
+    months.push({key,label,total});
+  }
+  const max = Math.max(...months.map(m=>m.total),1);
+  const currentKey = S.currentMonth;
+
+  document.getElementById('monthly-chart').innerHTML=`
+    <div class="chart-bar-wrap">
+      ${months.map(m=>{
+        const h = Math.max(Math.round(m.total/max*100),2);
+        const isCurrent = m.key===currentKey;
+        const color = isCurrent ? 'var(--acc)' : 'rgba(180,140,255,.3)';
+        return `<div class="chart-col">
+          ${m.total>0?`<div class="chart-amt">${Math.round(m.total/1000)}k</div>`:'<div class="chart-amt" style="opacity:0">0</div>'}
+          <div style="flex:1;width:100%;display:flex;align-items:flex-end">
+            <div class="chart-bar" style="height:${h}%;background:${color}${isCurrent?';box-shadow:0 0 10px rgba(180,140,255,.4)':''}"></div>
+          </div>
+          <div class="chart-label" style="color:${isCurrent?'var(--acc)':'var(--muted)'}">${m.label}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderShareCard(){
+  const entries = monthEntries();
+  const ct = catTotals(entries);
+  const total = grandTotal(ct);
+  const [y,m] = S.currentMonth.split('-').map(Number);
+  const parkEntries = S.entries.filter(e=>['TDL','TDS','両パーク','海外パーク'].includes(e.scene));
+  const allTotal = S.entries.reduce((s,e)=>(e.items||[]).reduce((ss,i)=>ss+(Number(i.amt)||0),s),0);
+
+  document.getElementById('sc-month').textContent = `${y}年${m}月`;
+  document.getElementById('sc-total').textContent = fmt(total);
+
+  const sorted = [...CATS].sort((a,b)=>(ct[b.id]||0)-(ct[a.id]||0)).filter(c=>ct[c.id]>0).slice(0,4);
+  document.getElementById('sc-cats').innerHTML = sorted.map(c=>`
+    <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:6px 10px;font-size:11px;color:rgba(255,255,255,.7)">
+      ${c.icon} ${c.label} <span style="color:#f0c060">${fmt(ct[c.id])}</span>
+    </div>
+  `).join('');
+
+  const avgPerVisit = parkEntries.length>0 ? Math.round(allTotal/parkEntries.length) : 0;
+  document.getElementById('sc-stats').innerHTML = `
+    <div class="sc-stat">
+      <div class="sc-stat-label">累計総支出</div>
+      <div class="sc-stat-val" style="font-size:16px">${fmt(allTotal)}</div>
+    </div>
+    <div class="sc-stat">
+      <div class="sc-stat-label">1インパ平均</div>
+      <div class="sc-stat-val" style="font-size:16px">${avgPerVisit>0?fmt(avgPerVisit):'—'}</div>
+    </div>
+  `;
+}
+
+function shareStats(){
+  const [y,m] = S.currentMonth.split('-').map(Number);
+  const entries = monthEntries();
+  const ct = catTotals(entries);
+  const total = grandTotal(ct);
+  const text = `${y}年${m}月のディズニー支出: ${fmt(total)}\n#DisneyKakebo\nhttps://kay0010.github.io/disney-kakebo/disney-kakebo.html`;
+  navigator.share({title:'Disney Kakebo', text});
+}
+
+function saveShareImage(){
+  // html2canvasを動的ロードして画像保存
+  if(typeof html2canvas==='undefined'){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload=()=>captureShareCard();
+    document.head.appendChild(s);
+  } else {
+    captureShareCard();
+  }
+}
+function captureShareCard(){
+  const el=document.getElementById('share-card');
+  html2canvas(el,{backgroundColor:null,scale:2}).then(canvas=>{
+    const link=document.createElement('a');
+    link.download='disney-kakebo.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    showToast('画像を保存しました！');
+  });
+}
+
+
 function renderEntries(){
   const sorted=[...S.entries].sort((a,b)=>b.date.localeCompare(a.date));
   const list=document.getElementById('entry-list');
