@@ -311,24 +311,28 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <!-- シェア用サマリー -->
     <div class="scard" style="margin-bottom:14px">
-      <div class="stitle">シェア用サマリー</div>
-      <div id="share-card" style="background:linear-gradient(135deg,#0d1f3c,#1a1035);border-radius:16px;padding:20px;margin-bottom:14px">
-        <div style="font-size:9px;letter-spacing:3px;color:rgba(180,140,255,.6);text-transform:uppercase;margin-bottom:12px">✦ Disney Kakebo</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px" id="sc-month">—</div>
-        <div style="font-family:'Playfair Display',serif;font-size:40px;color:#f0c060;line-height:1;margin-bottom:16px" id="sc-total">¥0</div>
-        <div id="sc-cats" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="sc-stats"></div>
-        <div style="margin-top:14px;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1px">kay0010.github.io/disney-kakebo</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="stitle" style="margin-bottom:0">シェア用サマリー</div>
+        <button onclick="generateShareImage()" style="background:var(--s3);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 12px;font-size:11px;font-family:'Zen Kaku Gothic New',sans-serif;cursor:pointer">🔄 更新</button>
       </div>
-      <div style="display:flex;gap:10px">
-        <button onclick="generateShareImage()" class="wbtn" style="flex:1;margin-bottom:0;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff">🖼️ 画像を生成する</button>
-        <button onclick="if(typeof navigator.share==='function'){shareStats()}else{copyAppUrl()}" class="wbtn" style="flex:1;margin-bottom:0;background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc)">📤 共有する</button>
+      <!-- 元カード（html2canvas用・非表示） -->
+      <div id="share-card" style="position:fixed;left:-9999px;top:0;width:360px;background:linear-gradient(135deg,#0d1f3c,#1a1035);padding:28px">
+        <div style="font-size:9px;letter-spacing:3px;color:rgba(180,140,255,.6);text-transform:uppercase;margin-bottom:14px">✦ Disney Kakebo</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px" id="sc-month">—</div>
+        <div style="font-family:'Playfair Display',serif;font-size:52px;color:#f0c060;line-height:1;margin-bottom:20px" id="sc-total">¥0</div>
+        <div id="sc-cats" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px" id="sc-stats"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,.2);letter-spacing:1px">kay0010.github.io/disney-kakebo</div>
       </div>
-      <!-- 生成後にここに画像が出る -->
-      <div id="share-img-wrap" style="display:none;margin-top:14px">
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px">画像を長押し → 写真に保存</div>
-        <img id="share-img" style="width:100%;border-radius:12px;display:block" src="">
+      <!-- 画像表示エリア -->
+      <div id="share-img-wrap" style="margin-bottom:14px">
+        <div id="share-img-placeholder" style="background:var(--s2);border:1px dashed var(--bd);border-radius:12px;padding:40px 20px;text-align:center;color:var(--muted);font-size:12px">
+          「🔄 更新」を押すと画像が生成されます<br><span style="font-size:10px;margin-top:4px;display:block">生成後は長押しで保存できます</span>
+        </div>
+        <img id="share-img" style="width:100%;border-radius:12px;display:none" src="">
       </div>
+      <button onclick="shareGeneratedImage()" class="wbtn" style="margin-bottom:0;background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc)">📤 画像を共有する</button>
+    </div>
     </div>
 
   </div>
@@ -940,30 +944,48 @@ function shareStats(){
 }
 
 function generateShareImage(){
-  renderShareCard(); // 最新データでカードを更新
+  renderShareCard();
   const load = ()=>{
     const el = document.getElementById('share-card');
     showToast('画像を生成中...');
     html2canvas(el,{backgroundColor:'#0d1f3c',scale:2,useCORS:true,logging:false}).then(canvas=>{
-      const imgWrap = document.getElementById('share-img-wrap');
       const img = document.getElementById('share-img');
       img.src = canvas.toDataURL('image/jpeg',0.95);
-      imgWrap.style.display = 'block';
-      imgWrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+      img.style.display = 'block';
+      document.getElementById('share-img-placeholder').style.display = 'none';
       showToast('長押しで写真に保存できます');
+    }).catch(()=>{
+      showToast('生成に失敗しました。再度お試しください');
     });
   };
   if(typeof html2canvas==='undefined'){
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
     s.onload=load;
+    s.onerror=()=>showToast('ライブラリの読み込みに失敗しました');
     document.head.appendChild(s);
   } else {
     load();
   }
 }
-function closeSharePreview(){
-  document.getElementById('share-preview-overlay').style.display='none';
+function shareGeneratedImage(){
+  const img = document.getElementById('share-img');
+  if(!img.src || img.style.display==='none'){
+    showToast('先に「🔄 更新」で画像を生成してください');
+    return;
+  }
+  // base64 → Blob → File に変換してシェア
+  fetch(img.src).then(r=>r.blob()).then(blob=>{
+    const file = new File([blob],'disney-kakebo.jpg',{type:'image/jpeg'});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], title:'Disney Kakebo'});
+    } else if(navigator.share){
+      // ファイル非対応のブラウザはテキストでフォールバック
+      shareStats();
+    } else {
+      copyAppUrl();
+    }
+  });
 }
 
 
