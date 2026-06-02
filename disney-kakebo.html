@@ -321,11 +321,29 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div style="margin-top:14px;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:1px">kay0010.github.io/disney-kakebo</div>
       </div>
       <div style="display:flex;gap:10px">
-        <button onclick="saveShareImage()" class="wbtn" style="flex:1;margin-bottom:0;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff">💾 画像として保存</button>
+        <button onclick="generateShareImage()" class="wbtn" style="flex:1;margin-bottom:0;background:linear-gradient(135deg,var(--acc2),var(--acc));border:none;color:#fff">🖼️ 画像を生成する</button>
         <button onclick="if(typeof navigator.share==='function'){shareStats()}else{copyAppUrl()}" class="wbtn" style="flex:1;margin-bottom:0;background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc)">📤 共有する</button>
+      </div>
+      <!-- 生成後にここに画像が出る -->
+      <div id="share-img-wrap" style="display:none;margin-top:14px">
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px">画像を長押し → 写真に保存</div>
+        <img id="share-img" style="width:100%;border-radius:12px;display:block" src="">
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- SHARE PREVIEW OVERLAY -->
+<div id="share-preview-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;flex-direction:column;align-items:center;justify-content:center;padding:24px" onclick="closeSharePreview()">
+  <div style="font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:16px;text-align:center">画像を長押し → 写真に保存<br><span style="font-size:10px">タップで閉じる</span></div>
+  <div id="share-preview-card" style="width:100%;max-width:360px;background:linear-gradient(135deg,#0d1f3c,#1a1035);border-radius:20px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+    <div style="font-size:9px;letter-spacing:3px;color:rgba(180,140,255,.6);text-transform:uppercase;margin-bottom:14px">✦ Disney Kakebo</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px" id="scp-month">—</div>
+    <div style="font-family:'Playfair Display',serif;font-size:52px;color:#f0c060;line-height:1;margin-bottom:20px" id="scp-total">¥0</div>
+    <div id="scp-cats" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="scp-stats"></div>
+    <div style="margin-top:18px;font-size:10px;color:rgba(255,255,255,.2);letter-spacing:1px">kay0010.github.io/disney-kakebo</div>
   </div>
 </div>
 
@@ -921,26 +939,31 @@ function shareStats(){
   navigator.share({title:'Disney Kakebo', text});
 }
 
-function saveShareImage(){
-  // html2canvasを動的ロードして画像保存
+function generateShareImage(){
+  renderShareCard(); // 最新データでカードを更新
+  const load = ()=>{
+    const el = document.getElementById('share-card');
+    showToast('画像を生成中...');
+    html2canvas(el,{backgroundColor:'#0d1f3c',scale:2,useCORS:true,logging:false}).then(canvas=>{
+      const imgWrap = document.getElementById('share-img-wrap');
+      const img = document.getElementById('share-img');
+      img.src = canvas.toDataURL('image/jpeg',0.95);
+      imgWrap.style.display = 'block';
+      imgWrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+      showToast('長押しで写真に保存できます');
+    });
+  };
   if(typeof html2canvas==='undefined'){
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload=()=>captureShareCard();
+    s.onload=load;
     document.head.appendChild(s);
   } else {
-    captureShareCard();
+    load();
   }
 }
-function captureShareCard(){
-  const el=document.getElementById('share-card');
-  html2canvas(el,{backgroundColor:null,scale:2}).then(canvas=>{
-    const link=document.createElement('a');
-    link.download='disney-kakebo.png';
-    link.href=canvas.toDataURL('image/png');
-    link.click();
-    showToast('画像を保存しました！');
-  });
+function closeSharePreview(){
+  document.getElementById('share-preview-overlay').style.display='none';
 }
 
 
