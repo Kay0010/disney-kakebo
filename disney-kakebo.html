@@ -362,9 +362,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <!-- CALENDAR -->
 <div class="page" id="page-cal">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button class="btn-sm" onclick="openEventModal()">＋ イベントを追加</button>
+  </div>
   <div id="cal-events-bar"></div>
   <div id="cal-grid"></div>
   <div id="cal-detail"></div>
+  <div class="scard" style="margin-top:16px">
+    <div class="stitle">イベント管理</div>
+    <div id="event-list-cal"></div>
+  </div>
 </div>
 
 <!-- SETTINGS -->
@@ -402,11 +409,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
     <div class="snote">締め日を設定すると、カレンダーの「今月」がその締め日ベースで集計されます。例：25日締めなら前月26日〜当月25日が1ヶ月分。</div>
   </div>
-  <div class="scard">
-    <div class="stitle">イベント管理</div>
-    <div id="event-list-settings"></div>
-    <button class="wbtn" onclick="openEventModal()" style="background:rgba(180,140,255,.1);border:1px solid rgba(180,140,255,.3);color:var(--acc);margin-top:4px">＋ イベントを追加</button>
-  </div>
+
   <div class="scard">
     <div class="stitle">友達に共有する</div>
     <div class="snote" style="margin-bottom:12px">Dオタの友達にもぜひ！リンクを送るだけでインストール不要で使えます。</div>
@@ -1044,6 +1047,7 @@ let editingEvIdx=null;
 let selectedColor=EV_COLORS[0];
 
 function renderCal(){
+  currentCalDate = null;
   const [y,m]=S.currentMonth.split('-').map(Number);
   const weekStart = Number(S.weekStart)||0; // 0=Sun, 1=Mon
   const WEEKDAYS_SUN = ['日','月','火','水','木','金','土'];
@@ -1105,12 +1109,42 @@ function renderCal(){
     </div>`;
 
   document.getElementById('cal-detail').innerHTML='';
+
+  // イベント一覧（カレンダータブ下部）
+  const evListCal = document.getElementById('event-list-cal');
+  const allEvents = S.events||[];
+  if(!allEvents.length){
+    evListCal.innerHTML=`<div style="font-size:12px;color:var(--muted);padding:8px 0">まだイベントがありません</div>`;
+  } else {
+    evListCal.innerHTML=allEvents.map((ev,i)=>`
+      <div class="ev-setting-item">
+        <div class="ev-setting-dot" style="background:${ev.color}"></div>
+        <div class="ev-setting-info">
+          <div class="ev-setting-name">${ev.name}</div>
+          <div class="ev-setting-dates">${ev.start.replace(/-/g,'/')} 〜 ${ev.end.replace(/-/g,'/')}</div>
+        </div>
+        <div class="ev-actions">
+          <button class="ev-edit-btn" onclick="openEventModal(${i})">編集</button>
+          <button class="ev-del-btn" onclick="deleteEvent(${i})">削除</button>
+        </div>
+      </div>
+    `).join('');
+  }
 }
 
+let currentCalDate = null;
 function showCalDetail(date){
   const entries=S.entries.filter(e=>e.date===date);
   const eventsOnDay=(S.events||[]).filter(ev=>ev.start<=date&&ev.end>=date);
   if(!entries.length && !eventsOnDay.length) return;
+
+  // 同じ日を再タップ→閉じる
+  if(currentCalDate === date){
+    currentCalDate = null;
+    document.getElementById('cal-detail').innerHTML='';
+    return;
+  }
+  currentCalDate = date;
 
   const dateLabel=date.replace(/-/g,'/');
   let html=`<div class="cal-detail-card"><div class="cal-detail-title">${dateLabel}</div>`;
@@ -1232,25 +1266,6 @@ function renderSettings(){
   document.getElementById('set-week-start').value=String(S.weekStart||0);
   document.getElementById('set-month-start').value=String(S.monthStart||1);
 
-  const evList=document.getElementById('event-list-settings');
-  const events=S.events||[];
-  if(!events.length){
-    evList.innerHTML=`<div style="font-size:12px;color:var(--muted);padding:8px 0">まだイベントがありません</div>`;
-  } else {
-    evList.innerHTML=events.map((ev,i)=>`
-      <div class="ev-setting-item">
-        <div class="ev-setting-dot" style="background:${ev.color}"></div>
-        <div class="ev-setting-info">
-          <div class="ev-setting-name">${ev.name}</div>
-          <div class="ev-setting-dates">${ev.start.replace(/-/g,'/')} 〜 ${ev.end.replace(/-/g,'/')}</div>
-        </div>
-        <div class="ev-actions">
-          <button class="ev-edit-btn" onclick="openEventModal(${i})">編集</button>
-          <button class="ev-del-btn" onclick="deleteEvent(${i})">削除</button>
-        </div>
-      </div>
-    `).join('');
-  }
 }
 function saveSettings(){
   S.income=Number(document.getElementById('set-income').value)||0;
