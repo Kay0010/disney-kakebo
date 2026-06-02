@@ -800,6 +800,11 @@ function renderStats(){
   const avg = parkVisits>0 ? Math.round(parkTotal/parkVisits) : 0;
   const allTotal = rangeEntries.reduce((s,e)=>(e.items||[]).reduce((ss,i)=>ss+(Number(i.amt)||0),s),0);
 
+  // 記録がある月の数だけで月平均を出す
+  const monthSet = new Set(rangeEntries.map(e=>e.date.slice(0,7)));
+  const activeMonths = Math.max(monthSet.size, 1);
+  const avgPerMonth = Math.round(allTotal / activeMonths);
+
   document.getElementById('avg-display').innerHTML = parkVisits>0 ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="sc-stat">
@@ -815,8 +820,8 @@ function renderStats(){
         <div class="sc-stat-val" style="font-size:15px">${fmt(allTotal)}</div>
       </div>
       <div class="sc-stat">
-        <div class="sc-stat-label">パーク外含む平均/月</div>
-        <div class="sc-stat-val" style="font-size:15px">${fmt(Math.round(allTotal/Math.max(getMonthCount(currentRange),1)))}</div>
+        <div class="sc-stat-label">月平均（記録月のみ）</div>
+        <div class="sc-stat-val" style="font-size:15px">${fmt(avgPerMonth)}</div>
       </div>
     </div>
   ` : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">この期間のパーク訪問記録がありません</div>`;
@@ -841,9 +846,8 @@ function getMonthCount(range){
 }
 
 function renderMonthlyChart(){
-  // 過去6ヶ月分のデータを集計
-  const months = [];
   const now = new Date();
+  const months = [];
   for(let i=5;i>=0;i--){
     const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -856,20 +860,24 @@ function renderMonthlyChart(){
   const max = Math.max(...months.map(m=>m.total),1);
   const currentKey = S.currentMonth;
 
+  const barHTML = months.map(m=>{
+    const hPct = Math.round(m.total/max*100);
+    const isCurrent = m.key===currentKey;
+    const color = isCurrent ? 'var(--acc)' : 'rgba(180,140,255,.35)';
+    const glow = isCurrent ? 'box-shadow:0 0 10px rgba(180,140,255,.5)' : '';
+    const amtLabel = m.total>0 ? `<div class="chart-amt">${Math.round(m.total/1000)}k</div>` : '<div class="chart-amt" style="opacity:0">0</div>';
+    return `<div class="chart-col">
+      ${amtLabel}
+      <div style="flex:1;width:100%;display:flex;align-items:flex-end;min-height:80px">
+        <div style="width:100%;height:${hPct}%;background:${color};${glow};border-radius:4px 4px 0 0;min-height:${m.total>0?'4px':'0'}; transition:height .6s cubic-bezier(.2,.8,.4,1)"></div>
+      </div>
+      <div class="chart-label" style="color:${isCurrent?'var(--acc)':'var(--muted)'}">${m.label}</div>
+    </div>`;
+  }).join('');
+
   document.getElementById('monthly-chart').innerHTML=`
-    <div class="chart-bar-wrap">
-      ${months.map(m=>{
-        const h = Math.max(Math.round(m.total/max*100),2);
-        const isCurrent = m.key===currentKey;
-        const color = isCurrent ? 'var(--acc)' : 'rgba(180,140,255,.3)';
-        return `<div class="chart-col">
-          ${m.total>0?`<div class="chart-amt">${Math.round(m.total/1000)}k</div>`:'<div class="chart-amt" style="opacity:0">0</div>'}
-          <div style="flex:1;width:100%;display:flex;align-items:flex-end">
-            <div class="chart-bar" style="height:${h}%;background:${color}${isCurrent?';box-shadow:0 0 10px rgba(180,140,255,.4)':''}"></div>
-          </div>
-          <div class="chart-label" style="color:${isCurrent?'var(--acc)':'var(--muted)'}">${m.label}</div>
-        </div>`;
-      }).join('')}
+    <div style="display:flex;align-items:stretch;gap:6px;height:140px;padding:0 4px">
+      ${barHTML}
     </div>`;
 }
 
