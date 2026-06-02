@@ -213,6 +213,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="scard">
     <div class="stitle">データ管理</div>
     <button class="wbtn" onclick="exportData()" style="background:var(--s2);border:1px solid var(--bd);color:var(--tx2)">📋 データをコピー（バックアップ）</button>
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">📲 バックアップから復元</div>
+      <textarea id="restore-input" placeholder="バックアップデータをここに貼り付け" style="width:100%;height:80px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;color:var(--tx);font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;outline:none;resize:none;line-height:1.5"></textarea>
+      <button class="wbtn" onclick="restoreData()" style="background:rgba(92,219,168,.1);border:1px solid rgba(92,219,168,.3);color:var(--grn);margin-top:6px">📲 このデータで復元する</button>
+    </div>
     <button class="wbtn" onclick="clearData()" style="background:none;border:1px solid rgba(255,107,122,.3);color:var(--red)">🗑️ 全データをリセット</button>
   </div>
 </div>
@@ -576,6 +581,35 @@ function exportData(){
   const text=`${y}年${m}月 ディズニー代: ${fmt(total)}\n\n`
     +CATS.filter(c=>(ct[c.id]||0)>0).map(c=>`${c.label}: ${fmt(ct[c.id])}`).join('\n');
   navigator.clipboard.writeText(text).then(()=>showToast('コピーしました！'));
+}
+function restoreData(){
+  const text = document.getElementById('restore-input').value.trim();
+  if(!text){ alert('データを貼り付けてください'); return; }
+
+  let imported;
+  try { imported = JSON.parse(text); } catch(e) { alert('データの形式が正しくありません。'); return; }
+  if(!imported.entries || !Array.isArray(imported.entries)){ alert('データの形式が正しくありません。'); return; }
+
+  // 競合チェック：現在と復元データで同じ月に記録があるか調べる
+  const currentMonths = [...new Set(S.entries.map(e => e.date.slice(0,7)))];
+  const importMonths  = [...new Set(imported.entries.map(e => (e.date||'').slice(0,7)).filter(Boolean))];
+  const conflicts = currentMonths.filter(m => importMonths.includes(m));
+
+  if(conflicts.length > 0){
+    const labels = conflicts.map(m => { const[y,mo]=m.split('-'); return `${y}年${Number(mo)}月`; }).join('・');
+    const ok = confirm(`${labels} のデータが両方に存在します。\n復元データで上書きしますか？\n（現在のデータは失われます）`);
+    if(!ok) return;
+  }
+
+  // 復元：設定値はマージ、entriesは完全置換
+  S.entries = imported.entries;
+  if(imported.income) S.income = imported.income;
+  if(imported.budget) S.budget = imported.budget;
+  saveS();
+  document.getElementById('restore-input').value = '';
+  showToast('復元しました！');
+  renderSettings();
+  renderHome();
 }
 function clearData(){
   if(confirm('全データを削除しますか？')){S.entries=[];saveS();alert('リセットしました。');}
